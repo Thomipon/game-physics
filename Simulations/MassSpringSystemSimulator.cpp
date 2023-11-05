@@ -56,21 +56,52 @@ void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 
 void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 {
-    // Euler
-    std::vector<Vec3> forces(getNumberOfMassPoints());
-    for(spring s : springs_)
-    {
-        float current_length = norm(getPositionOfMassPoint(s.point1) - getPositionOfMassPoint(s.point2));
-        Vec3 force = - m_fStiffness * (current_length - s.initial_length) * (getPositionOfMassPoint(s.point1) - getPositionOfMassPoint(s.point2)) / current_length;
-        forces[s.point1] += force;
-        forces[s.point2] -= force;
-    }
-
+    std::vector<Vec3> acceleration(getNumberOfMassPoints());
+    std::vector<Vec3> positions(getNumberOfMassPoints());
     for(int i = 0; i < getNumberOfMassPoints(); i++)
     {
-        mass_points_[i].velocity += timeStep * forces[i] / m_fMass;
-        mass_points_[i].position += timeStep * mass_points_[i].velocity;
+        positions[i] = getPositionOfMassPoint(i);
     }
+    calculateAcceleration(positions, acceleration);
+
+    switch(m_iIntegrator)
+    {
+    case integration_method::euler:
+		for(int i = 0; i < getNumberOfMassPoints(); i++)
+		{
+			mass_points_[i].velocity += timeStep * acceleration[i];
+			mass_points_[i].position += timeStep * mass_points_[i].velocity;
+		}
+        break;
+
+    case integration_method::midpoint:
+        for (int i = 0; i < getNumberOfMassPoints(); i++)
+        {
+            positions[i] += 0.5 * timeStep * mass_points_[i].velocity;
+            mass_points_[i].position += timeStep * (getVelocityOfMassPoint(i) + 0.5 * timeStep * acceleration[i]);
+        }
+        calculateAcceleration(positions, acceleration);
+        for (int i = 0; i < getNumberOfMassPoints(); i++)
+        {
+            mass_points_[i].velocity += timeStep * acceleration[i];
+        }
+        break;
+
+    case integration_method::leapfrog:
+        break;
+    default: break;
+    }    
+}
+
+void MassSpringSystemSimulator::calculateAcceleration(std::vector<Vec3>& poisitions, std::vector<Vec3>& acceleration) const
+{
+	for (spring s : springs_)
+        {
+            float current_length = norm(poisitions[s.point1] - poisitions[s.point2]);
+            Vec3 force = -m_fStiffness * (current_length - s.initial_length) * (poisitions[s.point1] - poisitions[s.point2]) / current_length;
+            acceleration[s.point1] += force / m_fMass;
+            acceleration[s.point2] -= force / m_fMass;
+        }
 }
 
 void MassSpringSystemSimulator::onClick(int x, int y)
