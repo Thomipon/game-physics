@@ -69,8 +69,8 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
     case integration_method::euler:
 		for(int i = 0; i < getNumberOfMassPoints(); i++)
 		{
+            mass_points_[i].position += timeStep * mass_points_[i].velocity;
 			mass_points_[i].velocity += timeStep * acceleration[i];
-			mass_points_[i].position += timeStep * mass_points_[i].velocity;
 		}
         break;
 
