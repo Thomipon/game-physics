@@ -108,12 +108,11 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
     }
 }
 
-void MassSpringSystemSimulator::calculateAcceleration(std::vector<Vec3>& positions, std::vector<Vec3>& acceleration) const
+void MassSpringSystemSimulator::calculateAcceleration(std::vector<Vec3>& positions, std::vector<Vec3>& acceleration)
 {
-    for (Vec3 a : acceleration)
+    for (int i = 0; i < getNumberOfMassPoints(); i++)
     {
-        a = m_externalForce;
-    	a -= m_fDamping;
+        acceleration[i] = m_externalForce - m_fDamping * getVelocityOfMassPoint(i);
     }
     for (spring s : springs_)
         {
@@ -252,7 +251,7 @@ void MassSpringSystemSimulator::set_up_complex_case()
     }
     addSpring(mass_points[9], mass_points[0], 5.);
 
-    applyExternalForce(Vec3{0., -9.81, 0.});
+    applyExternalForce(Vec3{ 0., -9.81, 0.});
     setDampingFactor(1);
     is_first_frame_ = true;
 }

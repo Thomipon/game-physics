@@ -102,6 +102,6 @@ private:
     bool only_first_;
     bool is_first_frame_;
 
-    void calculateAcceleration(std::vector<Vec3>& positions, std::vector<Vec3>& acceleration) const;
+    void calculateAcceleration(std::vector<Vec3>& positions, std::vector<Vec3>& acceleration);
     void print_state() const;
 };
