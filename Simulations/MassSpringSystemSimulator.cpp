@@ -88,9 +88,15 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
         break;
 
     case integration_method::leapfrog:
+        for (int i = 0; i < getNumberOfMassPoints(); i++)
+        {
+            mass_points_[i].velocity += timeStep * acceleration[i];
+        	mass_points_[i].position += timeStep * mass_points_[i].velocity;
+        }
         break;
+
     default: break;
-    }    
+    }
 }
 
 void MassSpringSystemSimulator::calculateAcceleration(std::vector<Vec3>& poisitions, std::vector<Vec3>& acceleration) const
