@@ -24,7 +24,7 @@ void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateCont
     DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(0.97, 0.86, 1));
     for (const auto& mass_point : mass_points_)
     {
-        DUC->drawSphere(mass_point.position, Vec3{1, 1, 1});
+        DUC->drawSphere(mass_point.position, Vec3{.1, .1, .1});
     }
 }
 
@@ -56,6 +56,30 @@ void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 
 void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 {
+    if (!only_first_ || is_first_frame_)
+    {
+        compute_all_forces();
+
+        switch (m_iIntegrator)
+        {
+        case integration_method::euler:
+            simulate_euler(timeStep);
+            break;
+        case integration_method::leapfrog:
+            simulate_leapfrog(timeStep);
+            break;
+        case integration_method::midpoint:
+            simulate_midpoint(timeStep);
+            break;
+        default:
+            throw std::runtime_error{"Illegal integrator!"};
+        }
+    }
+    if (only_first_ && is_first_frame_)
+    {
+        print_state();
+        is_first_frame_ = false;
+    }
 }
 
 void MassSpringSystemSimulator::onClick(int x, int y)
@@ -125,6 +149,8 @@ void MassSpringSystemSimulator::applyExternalForce(const Vec3& force)
 
 void MassSpringSystemSimulator::set_up_simple_case()
 {
+    is_first_frame_ = true;
+
     mass_points_.clear();
     mass_points_.reserve(2);
 
@@ -143,12 +169,14 @@ void MassSpringSystemSimulator::set_up_simple_case()
 
 void MassSpringSystemSimulator::set_up_complex_case()
 {
+    is_first_frame_ = true;
+    
     constexpr int num_spheres = 10;
 
     mass_points_.clear();
     mass_points_.reserve(num_spheres);
 
-    std::array<int, num_spheres> mass_points{
+    const std::array<int, num_spheres> mass_points{
         addMassPoint(Vec3{0., 0., 0.}, Vec3{-1., 0., 0.}, false),
         addMassPoint(Vec3{0., 2., 0.}, Vec3{1., 0., 0.}, false),
         addMassPoint(Vec3{0., -2., 0.}, Vec3{1., 1., 0.}, false),
@@ -173,4 +201,86 @@ void MassSpringSystemSimulator::set_up_complex_case()
 
     applyExternalForce(Vec3{0., 0., 0.});
     setDampingFactor(1);
+}
+
+void MassSpringSystemSimulator::print_state()
+{
+    for (int i = 0; i < getNumberOfMassPoints(); ++i)
+    {
+        std::cout << "Point " << i << ":\t" << mass_points_[i].position << "\t" << mass_points_[i].velocity << "\n";
+    }
+    std::cout << std::endl;
+}
+
+void MassSpringSystemSimulator::compute_spring_force(const spring& spring)
+{
+    auto& mp1 = mass_points_.at(spring.point1);
+    auto& mp2 = mass_points_.at(spring.point2);
+    const Vec3 direction{mp1.position - mp2.position};
+    const double current_length{norm(direction)};
+    Vec3 force{m_fStiffness * (current_length - spring.initial_length) / current_length * direction};
+    mp1.force -= force;
+    mp2.force += std::move(force);
+}
+
+void MassSpringSystemSimulator::compute_all_forces()
+{
+    for (auto& mass_point : mass_points_)
+    {
+        mass_point.force = m_externalForce;
+    }
+    
+    for (const auto& spring : springs_)
+    {
+        compute_spring_force(spring);
+    }
+}
+
+Vec3 MassSpringSystemSimulator::compute_acceleration(const Vec3& force, const Vec3& velocity) const
+{
+    return  1./ m_fMass * (force - m_fDamping * velocity);
+}
+
+void MassSpringSystemSimulator::simulate_euler(const float time_step)
+{
+    for (auto& mass_point : mass_points_)
+    {
+        mass_point.position += time_step * mass_point.velocity;
+        mass_point.velocity += time_step * compute_acceleration(mass_point.force, mass_point.velocity);
+    }
+}
+
+void MassSpringSystemSimulator::simulate_midpoint(const float time_step)
+{
+    std::vector<std::tuple<Vec3, Vec3>> temp_values;
+    temp_values.resize(mass_points_.size() + 1);
+    std::transform(mass_points_.cbegin(), mass_points_.cend(), temp_values.begin(), [](const mass_point& mass_point)
+    {
+        return std::make_tuple(
+            mass_point.position,
+            mass_point.velocity);
+    });
+
+    for (auto& mass_point : mass_points_)
+    {
+        mass_point.position += time_step / 2 * mass_point.velocity;
+        mass_point.velocity += time_step / 2 * compute_acceleration(mass_point.force, mass_point.velocity);
+    }
+
+    compute_all_forces();
+
+    for (int i = 0; i < mass_points_.size(); ++i)
+    {
+        mass_points_[i].position = std::get<0>(temp_values[i]) + time_step * mass_points_[i].velocity;
+        mass_points_[i].velocity = std::get<1>(temp_values[i]) + time_step * compute_acceleration(mass_points_[i].force, mass_points_[i].velocity);
+    }
+}
+
+void MassSpringSystemSimulator::simulate_leapfrog(const float time_step)
+{
+    for (auto& mass_point : mass_points_)
+    {
+        mass_point.velocity += time_step * compute_acceleration(mass_point.force, mass_point.velocity);
+        mass_point.position += time_step * mass_point.velocity;
+    }
 }

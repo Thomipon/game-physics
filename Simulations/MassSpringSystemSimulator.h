@@ -18,22 +18,25 @@ enum class integration_method
 struct mass_point
 {
 public:
-    mass_point(const Vec3& position, const Vec3& velocity, bool is_fixed)
+    mass_point(const Vec3& position, const Vec3& velocity, const bool is_fixed)
         : position(position),
           velocity(velocity),
-          is_fixed(is_fixed)
+          is_fixed(is_fixed),
+          force(0., 0., 0.)
     {
     }
 
     Vec3 position;
     Vec3 velocity;
+
     bool is_fixed;
+    Vec3 force;
 };
 
 struct spring
 {
 public:
-    spring(int point1, int point2, float initial_length)
+    spring(const int point1, const int point2, const float initial_length)
         : point1(point1),
           point2(point2),
           initial_length(initial_length)
@@ -95,9 +98,19 @@ private:
 
     std::vector<mass_point> mass_points_;
     std::vector<spring> springs_;
+    bool is_first_frame_;
 
     void set_up_simple_case();
     void set_up_complex_case();
 
     bool only_first_;
+
+    void print_state();
+
+    void compute_spring_force(const spring& spring);
+    void compute_all_forces();
+    Vec3 compute_acceleration(const Vec3& force, const Vec3& velocity) const;
+    void simulate_euler(float time_step);
+    void simulate_midpoint(float time_step);
+    void simulate_leapfrog(float time_step);
 };
