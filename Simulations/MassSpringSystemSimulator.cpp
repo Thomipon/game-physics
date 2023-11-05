@@ -103,7 +103,7 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 
     if(is_first_frame_)
     {
-
+        print_state();
         is_first_frame_ = false;
     }
 }
@@ -122,6 +122,15 @@ void MassSpringSystemSimulator::calculateAcceleration(std::vector<Vec3>& poisiti
         a -= m_fDamping;
         a /= m_fMass;
     }
+}
+
+void MassSpringSystemSimulator::print_state() const
+{
+    for (int i = 0; i < getNumberOfMassPoints(); ++i)
+    {
+        std::cout << "Point " << i << ":\t" << mass_points_[i].position << "\t" << mass_points_[i].velocity << "\n";
+    }
+    std::cout << std::endl;
 }
 
 void MassSpringSystemSimulator::onClick(int x, int y)
