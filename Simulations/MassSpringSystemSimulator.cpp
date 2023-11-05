@@ -252,7 +252,7 @@ void MassSpringSystemSimulator::set_up_complex_case()
     }
     addSpring(mass_points[9], mass_points[0], 5.);
 
-    applyExternalForce(Vec3{0., -0.981, 0.});
+    applyExternalForce(Vec3{0., -9.81, 0.});
     setDampingFactor(1);
     is_first_frame_ = true;
 }
