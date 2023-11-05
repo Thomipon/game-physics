@@ -203,7 +203,7 @@ void MassSpringSystemSimulator::set_up_complex_case()
     setDampingFactor(1);
 }
 
-void MassSpringSystemSimulator::print_state()
+void MassSpringSystemSimulator::print_state() const
 {
     for (int i = 0; i < getNumberOfMassPoints(); ++i)
     {
@@ -252,8 +252,7 @@ void MassSpringSystemSimulator::simulate_euler(const float time_step)
 
 void MassSpringSystemSimulator::simulate_midpoint(const float time_step)
 {
-    std::vector<std::tuple<Vec3, Vec3>> temp_values;
-    temp_values.resize(mass_points_.size() + 1);
+    std::vector<std::tuple<Vec3, Vec3>> temp_values(mass_points_.size());
     std::transform(mass_points_.cbegin(), mass_points_.cend(), temp_values.begin(), [](const mass_point& mass_point)
     {
         return std::make_tuple(

@@ -105,7 +105,7 @@ private:
 
     bool only_first_;
 
-    void print_state();
+    void print_state() const;
 
     void compute_spring_force(const spring& spring);
     void compute_all_forces();
