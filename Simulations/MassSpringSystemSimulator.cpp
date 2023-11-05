@@ -56,6 +56,21 @@ void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 
 void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 {
+    // Euler
+    std::vector<Vec3> forces(getNumberOfMassPoints());
+    for(spring s : springs_)
+    {
+        float current_length = norm(getPositionOfMassPoint(s.point1) - getPositionOfMassPoint(s.point2));
+        Vec3 force = - m_fStiffness * (current_length - s.initial_length) * (getPositionOfMassPoint(s.point1) - getPositionOfMassPoint(s.point2)) / current_length;
+        forces[s.point1] += force;
+        forces[s.point2] -= force;
+    }
+
+    for(int i = 0; i < getNumberOfMassPoints(); i++)
+    {
+        mass_points_[i].velocity += timeStep * forces[i] / m_fMass;
+        mass_points_[i].position += timeStep * mass_points_[i].velocity;
+    }
 }
 
 void MassSpringSystemSimulator::onClick(int x, int y)
