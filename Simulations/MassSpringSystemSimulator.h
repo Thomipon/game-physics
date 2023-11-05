@@ -100,7 +100,4 @@ private:
     void set_up_complex_case();
 
     bool only_first_;
-
-    static void set_integrator_cb(const void* value, void* client_data);
-    static void get_integrator_cb(void* value, void* client_data);
 };

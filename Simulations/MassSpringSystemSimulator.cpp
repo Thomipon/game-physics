@@ -10,8 +10,8 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 {
     this->DUC = DUC;
 
-    TwAddVarCB(DUC->g_pTweakBar, "IntegrationMethod", TW_TYPE_INT8, set_integrator_cb, get_integrator_cb, this,
-               "min=0 max=3");
+    TwAddVarRW(DUC->g_pTweakBar, "IntegrationMethod",
+               TwDefineEnumFromString("Integration Method", "euler, leapfrog, midpoint"), &m_iIntegrator, "");
 }
 
 void MassSpringSystemSimulator::reset()
@@ -173,16 +173,4 @@ void MassSpringSystemSimulator::set_up_complex_case()
 
     applyExternalForce(Vec3{0., 0., 0.});
     setDampingFactor(1);
-}
-
-void MassSpringSystemSimulator::set_integrator_cb(const void* value, void* client_data)
-{
-    /*auto* simulator{static_cast<MassSpringSystemSimulator*>(client_data)};
-    simulator->setIntegrator(*static_cast<const int*>(value));*/
-}
-
-void MassSpringSystemSimulator::get_integrator_cb(void* value, void* client_data)
-{
-    /*auto* simulator{static_cast<MassSpringSystemSimulator*>(client_data)};
-    *static_cast<int*>(value) = static_cast<int>(simulator->m_iIntegrator);*/
 }
