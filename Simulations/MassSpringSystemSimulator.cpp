@@ -56,46 +56,50 @@ void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 
 void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 {
-    std::vector<Vec3> acceleration(getNumberOfMassPoints());
-    std::vector<Vec3> positions(getNumberOfMassPoints());
-    for(int i = 0; i < getNumberOfMassPoints(); i++)
+    if (is_first_frame_ || !only_first_)
     {
-        positions[i] = getPositionOfMassPoint(i);
-    }
-    calculateAcceleration(positions, acceleration);
-
-    switch(m_iIntegrator)
-    {
-    case integration_method::euler:
-		for(int i = 0; i < getNumberOfMassPoints(); i++)
-		{
-            mass_points_[i].position += timeStep * mass_points_[i].velocity;
-			mass_points_[i].velocity += timeStep * acceleration[i];
-		}
-        break;
-
-    case integration_method::midpoint:
+        is_first_frame_ = false;
+        std::vector<Vec3> acceleration(getNumberOfMassPoints());
+        std::vector<Vec3> positions(getNumberOfMassPoints());
         for (int i = 0; i < getNumberOfMassPoints(); i++)
         {
-            positions[i] += 0.5 * timeStep * mass_points_[i].velocity;
-            mass_points_[i].position += timeStep * (getVelocityOfMassPoint(i) + 0.5 * timeStep * acceleration[i]);
+            positions[i] = getPositionOfMassPoint(i);
         }
         calculateAcceleration(positions, acceleration);
-        for (int i = 0; i < getNumberOfMassPoints(); i++)
-        {
-            mass_points_[i].velocity += timeStep * acceleration[i];
-        }
-        break;
 
-    case integration_method::leapfrog:
-        for (int i = 0; i < getNumberOfMassPoints(); i++)
+        switch (m_iIntegrator)
         {
-            mass_points_[i].velocity += timeStep * acceleration[i];
-        	mass_points_[i].position += timeStep * mass_points_[i].velocity;
-        }
-        break;
+        case integration_method::euler:
+            for (int i = 0; i < getNumberOfMassPoints(); i++)
+            {
+                mass_points_[i].position += timeStep * mass_points_[i].velocity;
+                mass_points_[i].velocity += timeStep * acceleration[i];
+            }
+            break;
 
-    default: break;
+        case integration_method::midpoint:
+            for (int i = 0; i < getNumberOfMassPoints(); i++)
+            {
+                positions[i] += 0.5 * timeStep * mass_points_[i].velocity;
+                mass_points_[i].position += timeStep * (getVelocityOfMassPoint(i) + 0.5 * timeStep * acceleration[i]);
+            }
+            calculateAcceleration(positions, acceleration);
+            for (int i = 0; i < getNumberOfMassPoints(); i++)
+            {
+                mass_points_[i].velocity += timeStep * acceleration[i];
+            }
+            break;
+
+        case integration_method::leapfrog:
+            for (int i = 0; i < getNumberOfMassPoints(); i++)
+            {
+                mass_points_[i].velocity += timeStep * acceleration[i];
+                mass_points_[i].position += timeStep * mass_points_[i].velocity;
+            }
+            break;
+
+        default: break;
+        }
     }
 }
 
@@ -105,9 +109,14 @@ void MassSpringSystemSimulator::calculateAcceleration(std::vector<Vec3>& poisiti
         {
             float current_length = norm(poisitions[s.point1] - poisitions[s.point2]);
             Vec3 force = -m_fStiffness * (current_length - s.initial_length) * (poisitions[s.point1] - poisitions[s.point2]) / current_length;
-            acceleration[s.point1] += force / m_fMass;
-            acceleration[s.point2] -= force / m_fMass;
+            acceleration[s.point1] += force;
+            acceleration[s.point2] -= force;
         }
+    for(Vec3 a : acceleration)
+    {
+        a -= m_fDamping;
+        a /= m_fMass;
+    }
 }
 
 void MassSpringSystemSimulator::onClick(int x, int y)
@@ -190,7 +199,8 @@ void MassSpringSystemSimulator::set_up_simple_case()
     addSpring(mp1, mp2, 1.);
 
     applyExternalForce(Vec3{0., 0., 0.});
-    setDampingFactor(1);
+    setDampingFactor(0);
+    is_first_frame_ = true;
 }
 
 void MassSpringSystemSimulator::set_up_complex_case()
@@ -225,4 +235,5 @@ void MassSpringSystemSimulator::set_up_complex_case()
 
     applyExternalForce(Vec3{0., 0., 0.});
     setDampingFactor(1);
+    is_first_frame_ = true;
 }

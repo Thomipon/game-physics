@@ -100,6 +100,7 @@ private:
     void set_up_complex_case();
 
     bool only_first_;
+    bool is_first_frame_;
 
     void calculateAcceleration(std::vector<Vec3>& poisitions, std::vector<Vec3>& acceleration) const;
 };
