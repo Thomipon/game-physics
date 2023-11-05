@@ -24,7 +24,7 @@ void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateCont
     DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(0.97, 0.86, 1));
     for (const auto& mass_point : mass_points_)
     {
-        DUC->drawSphere(mass_point.position, Vec3{1, 1, 1});
+        DUC->drawSphere(mass_point.position, Vec3{.1, .1, .1});
     }
 }
 
@@ -108,19 +108,23 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
     }
 }
 
-void MassSpringSystemSimulator::calculateAcceleration(std::vector<Vec3>& poisitions, std::vector<Vec3>& acceleration) const
+void MassSpringSystemSimulator::calculateAcceleration(std::vector<Vec3>& positions, std::vector<Vec3>& acceleration) const
 {
-	for (spring s : springs_)
+    for (Vec3 a : acceleration)
+    {
+        a = m_externalForce;
+    	a -= m_fDamping;
+    }
+    for (spring s : springs_)
         {
-            float current_length = norm(poisitions[s.point1] - poisitions[s.point2]);
-            Vec3 force = -m_fStiffness * (current_length - s.initial_length) * (poisitions[s.point1] - poisitions[s.point2]) / current_length;
+            float current_length = norm(positions[s.point1] - positions[s.point2]);
+            Vec3 force = -m_fStiffness * (current_length - s.initial_length) * (positions[s.point1] - positions[s.point2]) / current_length;
             acceleration[s.point1] += force;
             acceleration[s.point2] -= force;
         }
+
     for(Vec3 a : acceleration)
     {
-        a += m_externalForce;
-        a -= m_fDamping;
         a /= m_fMass;
     }
 }
