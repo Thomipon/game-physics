@@ -119,6 +119,7 @@ void MassSpringSystemSimulator::calculateAcceleration(std::vector<Vec3>& poisiti
         }
     for(Vec3 a : acceleration)
     {
+        a += m_externalForce;
         a -= m_fDamping;
         a /= m_fMass;
     }
@@ -247,7 +248,7 @@ void MassSpringSystemSimulator::set_up_complex_case()
     }
     addSpring(mass_points[9], mass_points[0], 5.);
 
-    applyExternalForce(Vec3{0., 0., 0.});
+    applyExternalForce(Vec3{0., -0.981, 0.});
     setDampingFactor(1);
     is_first_frame_ = true;
 }
