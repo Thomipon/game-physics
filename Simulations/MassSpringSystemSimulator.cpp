@@ -56,50 +56,55 @@ void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 
 void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 {
-    if (is_first_frame_ || !only_first_)
+    if (only_first_ && !is_first_frame_)
+        return;
+
+    std::vector<Vec3> acceleration(getNumberOfMassPoints());
+    std::vector<Vec3> positions(getNumberOfMassPoints());
+    for (int i = 0; i < getNumberOfMassPoints(); i++)
     {
-        is_first_frame_ = false;
-        std::vector<Vec3> acceleration(getNumberOfMassPoints());
-        std::vector<Vec3> positions(getNumberOfMassPoints());
+        positions[i] = getPositionOfMassPoint(i);
+    }
+    calculateAcceleration(positions, acceleration);
+
+    switch (m_iIntegrator)
+    {
+    case integration_method::euler:
         for (int i = 0; i < getNumberOfMassPoints(); i++)
         {
-            positions[i] = getPositionOfMassPoint(i);
+            mass_points_[i].position += timeStep * mass_points_[i].velocity;
+            mass_points_[i].velocity += timeStep * acceleration[i];
+        }
+        break;
+
+    case integration_method::midpoint:
+        for (int i = 0; i < getNumberOfMassPoints(); i++)
+        {
+            positions[i] += 0.5 * timeStep * mass_points_[i].velocity;
+            mass_points_[i].position += timeStep * (getVelocityOfMassPoint(i) + 0.5 * timeStep * acceleration[i]);
         }
         calculateAcceleration(positions, acceleration);
-
-        switch (m_iIntegrator)
+        for (int i = 0; i < getNumberOfMassPoints(); i++)
         {
-        case integration_method::euler:
-            for (int i = 0; i < getNumberOfMassPoints(); i++)
-            {
-                mass_points_[i].position += timeStep * mass_points_[i].velocity;
-                mass_points_[i].velocity += timeStep * acceleration[i];
-            }
-            break;
-
-        case integration_method::midpoint:
-            for (int i = 0; i < getNumberOfMassPoints(); i++)
-            {
-                positions[i] += 0.5 * timeStep * mass_points_[i].velocity;
-                mass_points_[i].position += timeStep * (getVelocityOfMassPoint(i) + 0.5 * timeStep * acceleration[i]);
-            }
-            calculateAcceleration(positions, acceleration);
-            for (int i = 0; i < getNumberOfMassPoints(); i++)
-            {
-                mass_points_[i].velocity += timeStep * acceleration[i];
-            }
-            break;
-
-        case integration_method::leapfrog:
-            for (int i = 0; i < getNumberOfMassPoints(); i++)
-            {
-                mass_points_[i].velocity += timeStep * acceleration[i];
-                mass_points_[i].position += timeStep * mass_points_[i].velocity;
-            }
-            break;
-
-        default: break;
+            mass_points_[i].velocity += timeStep * acceleration[i];
         }
+        break;
+
+    case integration_method::leapfrog:
+        for (int i = 0; i < getNumberOfMassPoints(); i++)
+        {
+            mass_points_[i].velocity += timeStep * acceleration[i];
+            mass_points_[i].position += timeStep * mass_points_[i].velocity;
+        }
+        break;
+
+    default: break;
+    }
+
+    if(is_first_frame_)
+    {
+
+        is_first_frame_ = false;
     }
 }
 
