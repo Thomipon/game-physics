@@ -59,6 +59,17 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
     if (only_first_ && !is_first_frame_)
         return;
 
+    if (changed_to_leapfrog_)
+    {
+        prepareLeapfrog(-0.5f * timeStep);
+        changed_to_leapfrog_ = false;
+    }
+	if (changed_from_leapfrog_)
+    {
+        prepareLeapfrog(0.5f * timeStep);
+        changed_from_leapfrog_ = false;
+    }
+
     std::vector<Vec3> acceleration(getNumberOfMassPoints());
     std::vector<Vec3> positions(getNumberOfMassPoints());
     for (int i = 0; i < getNumberOfMassPoints(); i++)
@@ -135,6 +146,22 @@ void MassSpringSystemSimulator::print_state() const
         std::cout << "Point " << i << ":\t" << mass_points_[i].position << "\t" << mass_points_[i].velocity << "\n";
     }
     std::cout << std::endl;
+}
+
+void MassSpringSystemSimulator::prepareLeapfrog(float half_timestep)
+{
+    std::vector<Vec3> acceleration(getNumberOfMassPoints());
+    std::vector<Vec3> positions(getNumberOfMassPoints());
+    for (int i = 0; i < getNumberOfMassPoints(); i++)
+    {
+        positions[i] = getPositionOfMassPoint(i);
+    }
+    calculateAcceleration(positions, acceleration);
+
+    for(int i = 0; i < getNumberOfMassPoints(); i++)
+    {
+        mass_points_[i].velocity += half_timestep * acceleration[i];
+    }
 }
 
 void MassSpringSystemSimulator::onClick(int x, int y)

@@ -77,7 +77,12 @@ public:
     // Do Not Change
     void setIntegrator(int integrator)
     {
-        m_iIntegrator = static_cast<integration_method>(integrator);
+        integration_method new_integrator = static_cast<integration_method>(integrator);
+        if (new_integrator == integration_method::leapfrog && m_iIntegrator != integration_method::leapfrog)
+            changed_to_leapfrog_ = true;
+        else if (new_integrator != integration_method::leapfrog && m_iIntegrator == integration_method::leapfrog)
+            changed_from_leapfrog_ = true;
+        m_iIntegrator = new_integrator;
     }
 
 private:
@@ -104,4 +109,8 @@ private:
 
     void calculateAcceleration(std::vector<Vec3>& positions, std::vector<Vec3>& acceleration);
     void print_state() const;
+
+    bool changed_to_leapfrog_;
+    bool changed_from_leapfrog_;
+    void prepareLeapfrog(float half_timestep);
 };
