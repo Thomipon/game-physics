@@ -24,7 +24,7 @@ void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateCont
     DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(0.97, 0.86, 1));
     for (const auto& mass_point : mass_points_)
     {
-        DUC->drawSphere(mass_point.position, Vec3{.1, .1, .1});
+        DUC->drawSphere(mass_point.position, Vec3{ m_fMassPointRadius, m_fMassPointRadius, m_fMassPointRadius});
     }
 }
 
@@ -117,6 +117,8 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
         print_state();
         is_first_frame_ = false;
     }
+
+    handle_collision();
 }
 
 void MassSpringSystemSimulator::calculateAcceleration(std::vector<Vec3>& positions, std::vector<Vec3>& acceleration)
@@ -136,6 +138,17 @@ void MassSpringSystemSimulator::calculateAcceleration(std::vector<Vec3>& positio
     for(Vec3 a : acceleration)
     {
         a /= m_fMass;
+    }
+}
+
+void MassSpringSystemSimulator::handle_collision()
+{
+    for (int i = 0; i < getNumberOfMassPoints(); i++)
+    {
+        if(m_fMassPointRadius >= dot(getPositionOfMassPoint(i) - m_planePosition, m_planeNormal))
+        {
+            mass_points_[i].velocity = reflectVector(getVelocityOfMassPoint(i), m_planeNormal);
+        }
     }
 }
 
@@ -258,7 +271,7 @@ void MassSpringSystemSimulator::set_up_complex_case()
     std::array<int, num_spheres> mass_points{
         addMassPoint(Vec3{0., 0., 0.}, Vec3{-1., 0., 0.}, false),
         addMassPoint(Vec3{0., 2., 0.}, Vec3{1., 0., 0.}, false),
-        addMassPoint(Vec3{0., -2., 0.}, Vec3{1., 1., 0.}, false),
+        addMassPoint(Vec3{0., 2., 1.}, Vec3{1., 1., 0.}, false),
         addMassPoint(Vec3{1., 0., 0.}, Vec3{1., -1., 0.}, false),
         addMassPoint(Vec3{0., 2., -1.}, Vec3{0., 1., 0.}, false),
         addMassPoint(Vec3{2., 0., 0.}, Vec3{-1., -1., 0.}, false),

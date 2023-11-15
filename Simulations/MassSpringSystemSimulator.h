@@ -92,6 +92,10 @@ private:
     float m_fDamping;
     integration_method m_iIntegrator;
 
+    float m_fMassPointRadius{.1};
+    Vec3 m_planePosition{0, -1, 0};
+    Vec3 m_planeNormal{0, 1, 0};
+
     // UI Attributes
     Vec3 m_externalForce;
     Point2D m_mouse;
@@ -108,6 +112,7 @@ private:
     bool is_first_frame_;
 
     void calculateAcceleration(std::vector<Vec3>& positions, std::vector<Vec3>& acceleration);
+    void handle_collision();
     void print_state() const;
 
     bool changed_to_leapfrog_;
