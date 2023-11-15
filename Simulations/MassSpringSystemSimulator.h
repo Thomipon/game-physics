@@ -31,6 +31,23 @@ public:
 
     bool is_fixed;
     Vec3 force;
+
+    void process_collision(const struct plane& plane, float radius);
+};
+
+struct plane
+{
+    plane() = default;
+
+    plane(const Vec3& position, const Vec3& normal)
+        : position(position),
+          normal(normal)
+    {
+    }
+
+public:
+    Vec3 position{0., -1., 0.};
+    Vec3 normal{0., 1., 0.};
 };
 
 struct spring
@@ -61,6 +78,7 @@ public:
     void drawFrame(ID3D11DeviceContext* pd3dImmediateContext) override;
     void notifyCaseChanged(int testCase) override;
     void externalForcesCalculations(float timeElapsed) override;
+    void resolve_collision();
     void simulateTimestep(float timeStep) override;
     void onClick(int x, int y) override;
     void onMouse(int x, int y) override;
@@ -104,6 +122,9 @@ private:
     void set_up_complex_case();
 
     bool only_first_;
+
+    plane collision_plane_{};
+    float radius_{.1};
 
     void print_state() const;
 

@@ -1,6 +1,15 @@
 ﻿#include "MassSpringSystemSimulator.h"
 #include <array>
 
+void mass_point::process_collision(const plane& plane, const float radius)
+{
+    if(abs(dot(position - plane.position, plane.normal)) < radius)
+    {
+        std::cout << "Collision\n";
+        velocity = reflectVector(velocity, plane.normal);
+    }
+}
+
 const char* MassSpringSystemSimulator::getTestCasesStr()
 {
     return "2 point 1 step, 2 point simulation, complex simulation";
@@ -24,7 +33,7 @@ void MassSpringSystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateCont
     DUC->setUpLighting(Vec3(), 0.4 * Vec3(1, 1, 1), 100, 0.6 * Vec3(0.97, 0.86, 1));
     for (const auto& mass_point : mass_points_)
     {
-        DUC->drawSphere(mass_point.position, Vec3{.1, .1, .1});
+        DUC->drawSphere(mass_point.position, Vec3{radius_});
     }
 }
 
@@ -54,6 +63,14 @@ void MassSpringSystemSimulator::externalForcesCalculations(float timeElapsed)
 {
 }
 
+void MassSpringSystemSimulator::resolve_collision()
+{
+    for (auto& mass_point : mass_points_)
+    {
+        mass_point.process_collision(collision_plane_, radius_);
+    }
+}
+
 void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 {
     if (!only_first_ || is_first_frame_)
@@ -74,6 +91,8 @@ void MassSpringSystemSimulator::simulateTimestep(float timeStep)
         default:
             throw std::runtime_error{"Illegal integrator!"};
         }
+
+        resolve_collision();
     }
     if (only_first_ && is_first_frame_)
     {
@@ -179,7 +198,7 @@ void MassSpringSystemSimulator::set_up_complex_case()
     const std::array<int, num_spheres> mass_points{
         addMassPoint(Vec3{0., 0., 0.}, Vec3{-1., 0., 0.}, false),
         addMassPoint(Vec3{0., 2., 0.}, Vec3{1., 0., 0.}, false),
-        addMassPoint(Vec3{0., -2., 0.}, Vec3{1., 1., 0.}, false),
+        addMassPoint(Vec3{0., 4., 0.}, Vec3{1., 1., 0.}, false),
         addMassPoint(Vec3{1., 0., 0.}, Vec3{1., -1., 0.}, false),
         addMassPoint(Vec3{0., 2., -1.}, Vec3{0., 1., 0.}, false),
         addMassPoint(Vec3{2., 0., 0.}, Vec3{-1., -1., 0.}, false),
@@ -199,7 +218,7 @@ void MassSpringSystemSimulator::set_up_complex_case()
     }
     addSpring(mass_points[9], mass_points[0], 5.);
 
-    applyExternalForce(Vec3{0., 0., 0.});
+    applyExternalForce(Vec3{0., -9.81, 0.});
     setDampingFactor(1);
 }
 
