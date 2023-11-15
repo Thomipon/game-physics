@@ -45,6 +45,7 @@ void MassSpringSystemSimulator::notifyCaseChanged(int testCase)
     case 0:
         only_first_ = true;
         set_up_simple_case();
+        simulateTimestep(.005);
         break;
     case 1:
         only_first_ = false;
@@ -183,7 +184,7 @@ void MassSpringSystemSimulator::set_up_simple_case()
     addSpring(mp1, mp2, 1.);
 
     applyExternalForce(Vec3{0., 0., 0.});
-    setDampingFactor(1);
+    setDampingFactor(0.);
 }
 
 void MassSpringSystemSimulator::set_up_complex_case()
@@ -219,7 +220,7 @@ void MassSpringSystemSimulator::set_up_complex_case()
     addSpring(mass_points[9], mass_points[0], 5.);
 
     applyExternalForce(Vec3{0., -9.81, 0.});
-    setDampingFactor(1);
+    setDampingFactor(1.);
 }
 
 void MassSpringSystemSimulator::print_state() const
