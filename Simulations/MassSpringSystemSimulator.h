@@ -101,6 +101,8 @@ public:
         m_iIntegrator = static_cast<integration_method>(integrator);
     }
 
+    void yeet();
+
 private:
     // Data Attributes
     float m_fMass;
@@ -134,4 +136,8 @@ private:
     void simulate_euler(float time_step);
     void simulate_midpoint(float time_step);
     void simulate_leapfrog(float time_step);
+
+    void prepare_leapfrog(float half_timestep);
+
+    int yeeted_index_;
 };

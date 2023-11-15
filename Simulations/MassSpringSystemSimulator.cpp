@@ -5,8 +5,7 @@ void mass_point::process_collision(const plane& plane, const float radius)
 {
     if(abs(dot(position - plane.position, plane.normal)) < radius)
     {
-        std::cout << "Collision\n";
-        velocity = reflectVector(velocity, plane.normal);
+        velocity = .99 * reflectVector(velocity, plane.normal);
     }
 }
 
@@ -21,6 +20,15 @@ void MassSpringSystemSimulator::initUI(DrawingUtilitiesClass* DUC)
 
     TwAddVarRW(DUC->g_pTweakBar, "IntegrationMethod",
                TwDefineEnumFromString("Integration Method", "euler, leapfrog, midpoint"), &m_iIntegrator, "");
+    TwAddSeparator(DUC->g_pTweakBar, "Interaction", "");
+    TwAddVarRW(DUC->g_pTweakBar, "Index", TW_TYPE_INT32, &yeeted_index_, "");
+    TwAddButton(DUC->g_pTweakBar, "YEET!", [](void* clientData)
+    {
+        if (auto* self = static_cast<MassSpringSystemSimulator*>(clientData)) {
+            self->yeet();
+        }
+        
+    }, this, "");
 }
 
 void MassSpringSystemSimulator::reset()
@@ -74,8 +82,21 @@ void MassSpringSystemSimulator::resolve_collision()
 
 void MassSpringSystemSimulator::simulateTimestep(float timeStep)
 {
+    static bool is_leapfrog{false};
     if (!only_first_ || is_first_frame_)
     {
+        if (is_leapfrog != (m_iIntegrator == integration_method::leapfrog))
+        {
+            if (is_leapfrog)
+            {
+                prepare_leapfrog(-0.5f * timeStep);
+            }
+            else
+            {
+                prepare_leapfrog(0.5f * timeStep);
+            }
+            is_leapfrog = !is_leapfrog;
+        }
         compute_all_forces();
 
         switch (m_iIntegrator)
@@ -165,6 +186,13 @@ Vec3 MassSpringSystemSimulator::getVelocityOfMassPoint(const int index)
 void MassSpringSystemSimulator::applyExternalForce(const Vec3& force)
 {
     m_externalForce = force;
+}
+
+void MassSpringSystemSimulator::yeet()
+{
+    if (yeeted_index_ < 0 || yeeted_index_ >= getNumberOfMassPoints())
+        return;
+    mass_points_[yeeted_index_].velocity += 10. * Vec3{0., 1., 0.};
 }
 
 void MassSpringSystemSimulator::set_up_simple_case()
@@ -301,5 +329,14 @@ void MassSpringSystemSimulator::simulate_leapfrog(const float time_step)
     {
         mass_point.velocity += time_step * compute_acceleration(mass_point.force, mass_point.velocity);
         mass_point.position += time_step * mass_point.velocity;
+    }
+}
+
+void MassSpringSystemSimulator::prepare_leapfrog(const float half_timestep)
+{
+    compute_all_forces();
+    for (auto& mass_point : mass_points_)
+    {
+        mass_point.velocity += half_timestep *  compute_acceleration(mass_point.force, mass_point.velocity);
     }
 }
