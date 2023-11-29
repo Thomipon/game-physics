@@ -18,6 +18,26 @@ Mat4 box::get_transform() const
     return scale_mat * rotation.getRotMat() * translation_mat;
 }
 
+Mat4 box::get_inertia() const
+{
+    const Mat4 rotation_mat{rotation.getRotMat()};
+    Mat4 inv_rotation_mat{rotation_mat};
+    inv_rotation_mat.transpose();
+    return inv_rotation_mat * inertia_tensor_ * rotation_mat;
+}
+
+Mat4 box::compute_inertia(Vec3 size, double mass)
+{
+    constexpr double factor = 1. / 12.;
+    const double scaled_mass = factor * mass;
+    return Mat4{
+        scaled_mass * (size.y * size.y + size.z * size.z), 0., 0., 0.,
+        0., scaled_mass * (size.x * size.x + size.z * size.z), 0., 0.,
+        0., 0., scaled_mass * (size.x * size.x + size.y * size.y), 0.,
+        0., 0., 0., 1.
+    }.inverse();
+}
+
 RigidBodySystemSimulator::RigidBodySystemSimulator()
     : Simulator(), m_mouse(), m_trackmouse(), m_oldtrackmouse(), only_first_(false)
 {
@@ -76,6 +96,12 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 
 void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
+    for (auto& body : bodies_)
+    {
+        body.center_position += body.linear_velocity * timeStep;
+        body.rotation += timeStep *.5 * body.rotation.dot(Quat{0., body.angular_velocity.x, body.angular_velocity.y, body.angular_velocity.z});
+        body.rotation = body.rotation.unit();
+    }
 }
 
 void RigidBodySystemSimulator::onClick(int x, int y)

@@ -18,7 +18,8 @@ struct box
           rotation(rotation.unit()),
           linear_velocity(linear_velocity),
           angular_velocity(angular_velocity),
-          mass(mass)
+          mass(mass),
+          inertia_tensor_(compute_inertia(size, mass))
     {
     }
 
@@ -30,6 +31,13 @@ struct box
     double mass;
 
     Mat4 get_transform() const;
+
+    Mat4 get_inertia() const;
+
+private:
+    Mat4 inertia_tensor_;
+
+    static Mat4 compute_inertia(Vec3 size, double mass);
 };
 
 class RigidBodySystemSimulator : public Simulator
