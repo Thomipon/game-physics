@@ -7,6 +7,8 @@
 
 #define TESTCASEUSEDTORUNTEST 2
 
+const double pi_half{std::acos(0.)};
+
 struct box
 {
     box(const Vec3& center, const Vec3& size, const Quat& rotation, const Vec3& linear_velocity,
@@ -69,4 +71,9 @@ private:
     Point2D m_oldtrackmouse;
 
     std::vector<box> bodies_;
+    bool only_first_;
+
+    void set_up_simple();
+    void set_up_two_body();
+    void set_up_complex();
 };

@@ -10,16 +10,16 @@ Mat4 box::get_transform() const
     };
 
     const Mat4 translation_mat{
-        0., 0., 0., center_position.x,
-        0., 0., 0., center_position.y,
-        0., 0., 0., center_position.z,
+        1., 0., 0., center_position.x,
+        0., 1., 0., center_position.y,
+        0., 0., 1., center_position.z,
         0., 0., 0., 1.
     };
     return scale_mat * rotation.getRotMat() * translation_mat;
 }
 
 RigidBodySystemSimulator::RigidBodySystemSimulator()
-    : Simulator(), m_mouse(), m_trackmouse(), m_oldtrackmouse()
+    : Simulator(), m_mouse(), m_trackmouse(), m_oldtrackmouse(), only_first_(false)
 {
 }
 
@@ -51,6 +51,23 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateConte
 
 void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 {
+    m_iTestCase = testCase;
+    only_first_ = testCase == 0;
+    switch (testCase)
+    {
+    case 0:
+    case 1:
+        set_up_simple();
+        break;
+    case 2:
+        set_up_two_body();
+        break;
+    case 3:
+        set_up_complex();
+        break;
+    default:
+        throw std::runtime_error{"Illegal testcase"};
+    }
 }
 
 void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
@@ -112,4 +129,20 @@ void RigidBodySystemSimulator::setOrientationOf(const int i, const Quat& orienta
 void RigidBodySystemSimulator::setVelocityOf(const int i, const Vec3& velocity)
 {
     bodies_.at(i).linear_velocity = velocity;
+}
+
+void RigidBodySystemSimulator::set_up_simple()
+{
+    bodies_.clear();
+
+    bodies_.emplace_back(Vec3{0.}, Vec3{1., .6, .5}, Quat{Vec3{0., 0., 1.}, pi_half}, Vec3{0.}, Vec3{0.}, 2.);
+    applyForceOnBody(0, Vec3{.3, .5, .25}, Vec3{1., 1., 0});
+}
+
+void RigidBodySystemSimulator::set_up_two_body()
+{
+}
+
+void RigidBodySystemSimulator::set_up_complex()
+{
 }
