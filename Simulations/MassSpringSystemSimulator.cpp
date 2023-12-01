@@ -128,12 +128,12 @@ void MassSpringSystemSimulator::calculateAcceleration(std::vector<Vec3>& positio
         acceleration[i] = m_externalForce - m_fDamping * getVelocityOfMassPoint(i);
     }
     for (spring s : springs_)
-        {
-            float current_length = norm(positions[s.point1] - positions[s.point2]);
-            Vec3 force = -m_fStiffness * (current_length - s.initial_length) * (positions[s.point1] - positions[s.point2]) / current_length;
-            acceleration[s.point1] += force;
-            acceleration[s.point2] -= force;
-        }
+    {
+        float current_length = norm(positions[s.point1] - positions[s.point2]);
+        Vec3 force = -m_fStiffness * (current_length - s.initial_length) * (positions[s.point1] - positions[s.point2]) / current_length;
+        acceleration[s.point1] += force;
+        acceleration[s.point2] -= force;
+    }
 
     for(Vec3 a : acceleration)
     {
