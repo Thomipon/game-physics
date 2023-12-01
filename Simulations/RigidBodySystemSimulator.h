@@ -12,14 +12,16 @@ const double pi_half{std::acos(0.)};
 struct box
 {
     box(const Vec3& center, const Vec3& size, const Quat& rotation, const Vec3& linear_velocity,
-        const Vec3& angular_velocity, const double& mass)
-        : center_position(center),
-          size(size),
-          rotation(rotation.unit()),
-          linear_velocity(linear_velocity),
-          angular_velocity(angular_velocity),
-          mass(mass),
-          inertia_tensor_(compute_inertia(size, mass))
+        const Vec3& angular_velocity, const double& mass) :
+		center_position(center),
+		size(size),
+		rotation(rotation.unit()),
+		linear_velocity(linear_velocity),
+	    angular_velocity(angular_velocity),
+		mass(mass),
+		inertia_tensor_(compute_initial_inertia(size, mass)),
+		angular_momentum(inertia_tensor_ * angular_velocity),
+		torque(.0)
     {
     }
 
@@ -28,16 +30,20 @@ struct box
     Quat rotation;
     Vec3 linear_velocity;
     Vec3 angular_velocity;
+    Vec3 angular_momentum;
+    Vec3 torque;
     double mass;
 
     Mat4 get_transform() const;
 
     Mat4 get_inertia() const;
+    void update_inertia();
 
 private:
+    // inverse inertia tensor
     Mat4 inertia_tensor_;
 
-    static Mat4 compute_inertia(Vec3 size, double mass);
+    static Mat4 compute_initial_inertia(Vec3 size, double mass);
 };
 
 class RigidBodySystemSimulator : public Simulator
