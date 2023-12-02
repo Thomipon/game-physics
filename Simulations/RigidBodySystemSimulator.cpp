@@ -88,6 +88,7 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 {
     m_iTestCase = testCase;
     only_first_ = testCase == 0;
+    is_first_ = true;
     switch (testCase)
     {
     case 0:
@@ -111,6 +112,9 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 
 void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
+    if (only_first_ && !is_first_)
+        return;
+
     for (auto& body : bodies_)
     {
         body.simulate_step(timeStep);

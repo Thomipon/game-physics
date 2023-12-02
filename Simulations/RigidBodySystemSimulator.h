@@ -89,6 +89,7 @@ private:
 
     std::vector<box> bodies_;
     bool only_first_;
+    bool is_first_;
 
     void set_up_simple();
     void set_up_two_body();
