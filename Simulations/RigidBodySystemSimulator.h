@@ -21,7 +21,8 @@ struct box
 		mass(mass),
 		inertia_tensor_(compute_initial_inertia(size, mass)),
 		angular_momentum(inertia_tensor_ * angular_velocity),
-		torque(.0)
+		torque(0.),
+		forces(0.)
     {
     }
 
@@ -32,18 +33,20 @@ struct box
     Vec3 angular_velocity;
     Vec3 angular_momentum;
     Vec3 torque;
+    Vec3 forces;
     double mass;
 
     Mat4 get_transform() const;
 
-    Mat4 get_inertia() const;
-    void update_inertia();
+    void simulate_step(float timeStep);
 
 private:
     // inverse inertia tensor
     Mat4 inertia_tensor_;
 
     static Mat4 compute_initial_inertia(Vec3 size, double mass);
+
+	void update_inertia();
 };
 
 class RigidBodySystemSimulator : public Simulator

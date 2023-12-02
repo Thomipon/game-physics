@@ -26,11 +26,6 @@ void box::update_inertia()
     inertia_tensor_ = inv_rotation_mat * inertia_tensor_ * rotation_mat;
 }
 
-Mat4 box::get_inertia() const
-{
-    return inertia_tensor_;
-}
-
 Mat4 box::compute_initial_inertia(Vec3 size, double mass)
 {
     constexpr double factor = 1. / 12.;
@@ -41,6 +36,21 @@ Mat4 box::compute_initial_inertia(Vec3 size, double mass)
         0., 0., scaled_mass * (size.x * size.x + size.y * size.y), 0.,
         0., 0., 0., 1.
     }.inverse();
+}
+
+void box::simulate_step(float timeStep)
+{
+    center_position += linear_velocity * timeStep;
+    linear_velocity += timeStep * forces / mass;
+
+    rotation += timeStep * .5 * rotation.dot(Quat{ 0., angular_velocity.x, angular_velocity.y, angular_velocity.z });
+    rotation = rotation.unit();
+
+    angular_momentum += timeStep * torque;
+    update_inertia();
+    angular_velocity = inertia_tensor_ * angular_momentum;
+	forces = 0.;
+    torque = 0.;
 }
 
 RigidBodySystemSimulator::RigidBodySystemSimulator()
@@ -103,14 +113,7 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
     for (auto& body : bodies_)
     {
-        body.center_position += body.linear_velocity * timeStep;
-
-        body.rotation += timeStep * .5 * body.rotation.dot(Quat{ 0., body.angular_velocity.x, body.angular_velocity.y, body.angular_velocity.z });
-        body.rotation = body.rotation.unit();
-
-        body.angular_momentum += timeStep * body.torque;
-        body.update_inertia();
-        body.angular_velocity = body.get_inertia() * body.angular_momentum;
+        body.simulate_step(timeStep);
     }
 }
 
@@ -150,6 +153,8 @@ Vec3 RigidBodySystemSimulator::getAngularVelocityOfRigidBody(const int i)
 
 void RigidBodySystemSimulator::applyForceOnBody(int i, Vec3 loc, Vec3 force)
 {
+    bodies_[i].forces += force;
+    bodies_[i].torque += cross(loc, force);
 }
 
 void RigidBodySystemSimulator::addRigidBody(Vec3 position, Vec3 size, int mass)
