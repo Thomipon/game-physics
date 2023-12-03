@@ -10,10 +10,10 @@ Mat4 box::get_transform() const
     };
 
     const Mat4 translation_mat{
-        1., 0., 0., center_position.x,
-        0., 1., 0., center_position.y,
-        0., 0., 1., center_position.z,
-        0., 0., 0., 1.
+        1., 0., 0., 0.,
+        0., 1., 0., 0.,
+        0., 0., 1., 0.,
+        center_position.x, center_position.y, center_position.z, 1.
     };
     return scale_mat * rotation.getRotMat() * translation_mat;
 }
