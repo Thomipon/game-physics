@@ -119,6 +119,18 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
     {
         body.simulate_step(timeStep);
     }
+
+    if (only_first_ && is_first_) {
+        print_solution();
+    }
+	is_first_ = false;
+}
+
+void RigidBodySystemSimulator::print_solution()
+{
+    std::cout << "Linear Velocity: " << getLinearVelocityOfRigidBody(0) << " Angular velocity: " << getAngularVelocityOfRigidBody(0) << "\n";
+    Vec3 point_velocity{ getLinearVelocityOfRigidBody(0) + cross(getAngularVelocityOfRigidBody(0), Vec3{-0.3, -0.5, -0.25}) };
+    std::cout << "Velocity of Point (-0.3, -0.5, -0.25): " << point_velocity<< "\n";
 }
 
 void RigidBodySystemSimulator::onClick(int x, int y)

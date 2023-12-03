@@ -94,4 +94,6 @@ private:
     void set_up_simple();
     void set_up_two_body();
     void set_up_complex();
+
+    void print_solution();
 };
