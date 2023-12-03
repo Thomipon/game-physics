@@ -120,6 +120,8 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
         body.simulate_step(timeStep);
     }
 
+    // Handle collision
+
     if (only_first_ && is_first_) {
         print_solution();
     }
@@ -198,6 +200,11 @@ void RigidBodySystemSimulator::set_up_simple()
 
 void RigidBodySystemSimulator::set_up_two_body()
 {
+    bodies_.clear();
+
+    bodies_.emplace_back(Vec3{ -1., 0., 0. }, Vec3{ 0.5, 0.5, 0.5 }, Quat{ Vec3{0., 0., 1.}, 0. }, Vec3{ 0.5, 0., 0. }, Vec3{ 0. }, 3.);
+    bodies_.emplace_back(Vec3{ 0.5, 0., 0. }, Vec3{ 0.3, 0.3, 0.3 }, Quat{ Vec3{1., 1., 1.}, 0.5 * pi_half }, Vec3{ -0.25, 0., 0. }, Vec3{ 0. }, 1.);
+    bodies_.emplace_back(Vec3{ 0.5, 0., 0. }, Vec3{ 0.3, 0.3, 0.3 }, Quat{ Vec3{1., 1., 1.}, 0.5 * pi_half }, Vec3{ -0.25, 0., 0. }, Vec3{ 0. }, 1.);
 }
 
 void RigidBodySystemSimulator::set_up_complex()
