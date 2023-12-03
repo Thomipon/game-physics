@@ -120,7 +120,20 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
         body.simulate_step(timeStep);
     }
 
-    // Handle collision
+    
+    for(int i = 0; i < getNumberOfRigidBodies(); i++)
+    {
+	    for(int j = i+1; j < getNumberOfRigidBodies(); j++)
+	    {
+            /*
+            CollisionInfo collision{ checkCollisionSAT(bodies_[i].get_transform(), bodies_[j].get_transform()) };
+            if(collision.isValid)
+            {
+	            // ...
+            }
+            */
+	    }
+    }
 
     if (only_first_ && is_first_) {
         print_solution();
