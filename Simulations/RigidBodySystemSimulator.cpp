@@ -120,18 +120,16 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
         body.simulate_step(timeStep);
     }
 
-    
+    // Collision Detection
     for(int i = 0; i < getNumberOfRigidBodies(); i++)
     {
 	    for(int j = i+1; j < getNumberOfRigidBodies(); j++)
 	    {
-            /*
-            CollisionInfo collision{ checkCollisionSAT(bodies_[i].get_transform(), bodies_[j].get_transform()) };
+            CollisionInfo collision = checkCollisionSAT(bodies_[i].get_transform(), bodies_[j].get_transform());
             if(collision.isValid)
             {
-	            // ...
+                std::cout << "Collision of " << i << " and " << j << "\n";
             }
-            */
 	    }
     }
 
@@ -215,9 +213,8 @@ void RigidBodySystemSimulator::set_up_two_body()
 {
     bodies_.clear();
 
-    bodies_.emplace_back(Vec3{ -1., 0., 0. }, Vec3{ 0.5, 0.5, 0.5 }, Quat{ Vec3{0., 0., 1.}, 0. }, Vec3{ 0.5, 0., 0. }, Vec3{ 0. }, 3.);
-    bodies_.emplace_back(Vec3{ 0.5, 0., 0. }, Vec3{ 0.3, 0.3, 0.3 }, Quat{ Vec3{1., 1., 1.}, 0.5 * pi_half }, Vec3{ -0.25, 0., 0. }, Vec3{ 0. }, 1.);
-    bodies_.emplace_back(Vec3{ 0.5, 0., 0. }, Vec3{ 0.3, 0.3, 0.3 }, Quat{ Vec3{1., 1., 1.}, 0.5 * pi_half }, Vec3{ -0.25, 0., 0. }, Vec3{ 0. }, 1.);
+    bodies_.emplace_back(Vec3{ -1., 0., 0. }, Vec3{ 0.5, 0.5, 0.5 }, Quat{ Vec3{0., 0., 1.}, 0. }, Vec3{ 0.3, 0., 0. }, Vec3{ 0. }, 3.);
+    bodies_.emplace_back(Vec3{ 0.5, 0., 0. }, Vec3{ 0.3, 0.3, 0.3 }, Quat{ Vec3{1., 1., 1.}, 0.5 * pi_half }, Vec3{ -0.15, 0., 0. }, Vec3{ 0. }, 1.);
 }
 
 void RigidBodySystemSimulator::set_up_complex()

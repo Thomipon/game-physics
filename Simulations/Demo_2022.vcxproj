@@ -230,6 +230,7 @@
     <ClCompile Include="util\util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="collisionDetect.h" />
     <ClInclude Include="DrawingUtilitiesClass.h" />
     <ClInclude Include="RigidBodySystemSimulator.h" />
     <ClInclude Include="Simulator.h" />
