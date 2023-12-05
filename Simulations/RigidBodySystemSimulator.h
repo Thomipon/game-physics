@@ -20,8 +20,8 @@ struct box
 		linear_velocity(linear_velocity),
 	    angular_velocity(angular_velocity),
 		mass(mass),
-		inertia_tensor_(compute_initial_inertia(size, mass)),
-		angular_momentum(inertia_tensor_ * angular_velocity),
+		inertia_tensor(compute_initial_inertia(size, mass)),
+		angular_momentum(inertia_tensor * angular_velocity),
 		torque(0.),
 		forces(0.)
     {
@@ -36,15 +36,15 @@ struct box
     Vec3 torque;
     Vec3 forces;
     double mass;
+    Mat4 inertia_tensor; // inverted
 
     Mat4 get_transform() const;
 
     void simulate_step(float timeStep);
+    Vec3 get_point_velocity(Vec3 position) const;
+    void apply_impulse(Vec3 impulse_normal, Vec3 position);
 
 private:
-    // inverse inertia tensor
-    Mat4 inertia_tensor_;
-
     static Mat4 compute_initial_inertia(Vec3 size, double mass);
 
 	void update_inertia();
@@ -97,4 +97,5 @@ private:
     void set_up_complex();
 
     void print_solution();
+    void collide_bodies(int a, int b, Vec3 collision_point,Vec3 normal);
 };

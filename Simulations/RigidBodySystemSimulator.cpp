@@ -23,7 +23,7 @@ void box::update_inertia()
     const Mat4 rotation_mat{rotation.getRotMat()};
     Mat4 inv_rotation_mat{rotation_mat};
     inv_rotation_mat.transpose();
-    inertia_tensor_ = inv_rotation_mat * inertia_tensor_ * rotation_mat;
+    inertia_tensor = inv_rotation_mat * inertia_tensor * rotation_mat;
 }
 
 Mat4 box::compute_initial_inertia(Vec3 size, double mass)
@@ -48,9 +48,20 @@ void box::simulate_step(float timeStep)
 
     angular_momentum += timeStep * torque;
     update_inertia();
-    angular_velocity = inertia_tensor_ * angular_momentum;
+    angular_velocity = inertia_tensor * angular_momentum;
 	forces = 0.;
     torque = 0.;
+}
+
+Vec3 box::get_point_velocity(Vec3 position) const
+{
+    return linear_velocity + cross(angular_velocity, position);
+}
+
+void box::apply_impulse(Vec3 impulse_normal, Vec3 position)
+{
+    linear_velocity += impulse_normal / mass;
+    angular_momentum += cross(position, impulse_normal);
 }
 
 RigidBodySystemSimulator::RigidBodySystemSimulator()
@@ -129,6 +140,7 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
             if(collision.isValid)
             {
                 std::cout << "Collision of " << i << " and " << j << "\n";
+                collide_bodies(i, j, collision.collisionPointWorld, collision.normalWorld);
             }
 	    }
     }
@@ -139,11 +151,27 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 	is_first_ = false;
 }
 
+void RigidBodySystemSimulator::collide_bodies(int a, int b, Vec3 collision_point, Vec3 normal)
+{
+    Vec3 xa = collision_point - bodies_[a].center_position;
+    Vec3 xb = collision_point - bodies_[b].center_position;
+    Vec3 relative_velocity = bodies_[a].get_point_velocity(xa) - bodies_[b].get_point_velocity(xb);
+
+    Vec3 inertia_a = cross(bodies_[a].inertia_tensor * cross(xa, normal), xa);
+    Vec3 inertia_b = cross(bodies_[b].inertia_tensor * cross(xb, normal), xb);
+    Vec3 denominator = 1 / bodies_[a].mass + 1 / bodies_[b].mass + (inertia_a + inertia_b) * normal;
+
+    // c = 0
+    Vec3 impulse = - relative_velocity * normal / denominator;
+
+    bodies_[a].apply_impulse(impulse * normal, xa);
+    bodies_[b].apply_impulse(-impulse * normal, xb);
+}
+
 void RigidBodySystemSimulator::print_solution()
 {
     std::cout << "Linear Velocity: " << getLinearVelocityOfRigidBody(0) << " Angular velocity: " << getAngularVelocityOfRigidBody(0) << "\n";
-    Vec3 point_velocity{ getLinearVelocityOfRigidBody(0) + cross(getAngularVelocityOfRigidBody(0), Vec3{-0.3, -0.5, -0.25}) };
-    std::cout << "Velocity of Point (-0.3, -0.5, -0.25): " << point_velocity<< "\n";
+    std::cout << "Velocity of Point (-0.3, -0.5, -0.25): " << bodies_[0].get_point_velocity(Vec3{ -0.3, -0.5, -0.25 }) << "\n";
 }
 
 void RigidBodySystemSimulator::onClick(int x, int y)
@@ -213,8 +241,8 @@ void RigidBodySystemSimulator::set_up_two_body()
 {
     bodies_.clear();
 
-    bodies_.emplace_back(Vec3{ -1., 0., 0. }, Vec3{ 0.5, 0.5, 0.5 }, Quat{ Vec3{0., 0., 1.}, 0. }, Vec3{ 0.3, 0., 0. }, Vec3{ 0. }, 3.);
-    bodies_.emplace_back(Vec3{ 0.5, 0., 0. }, Vec3{ 0.3, 0.3, 0.3 }, Quat{ Vec3{1., 1., 1.}, 0.5 * pi_half }, Vec3{ -0.15, 0., 0. }, Vec3{ 0. }, 1.);
+    bodies_.emplace_back(Vec3{ -1., 0., 0. }, Vec3{ 0.5, 0.5, 0.5 }, Quat{ Vec3{0., 0., 1.}, 0. }, Vec3{ 0.5, 0., 0. }, Vec3{ 0. }, 3.);
+    bodies_.emplace_back(Vec3{ 0.5, 0., 0. }, Vec3{ 0.3, 0.3, 0.3 }, Quat{ Vec3{1., 1., 1.}, 0.5 * pi_half }, Vec3{ -0.25, 0., 0. }, Vec3{ 0. }, 1.);
 }
 
 void RigidBodySystemSimulator::set_up_complex()
