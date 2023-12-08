@@ -159,10 +159,10 @@ void RigidBodySystemSimulator::collide_bodies(int a, int b, Vec3 collision_point
 
     Vec3 inertia_a = cross(bodies_[a].inertia_tensor * cross(xa, normal), xa);
     Vec3 inertia_b = cross(bodies_[b].inertia_tensor * cross(xb, normal), xb);
-    Vec3 denominator = 1 / bodies_[a].mass + 1 / bodies_[b].mass + (inertia_a + inertia_b) * normal;
+    double denominator = 1 / bodies_[a].mass + 1 / bodies_[b].mass + dot((inertia_a + inertia_b) , normal);
 
     // c = 0
-    Vec3 impulse = - relative_velocity * normal / denominator;
+    double impulse = - dot(relative_velocity, normal) / denominator;
 
     bodies_[a].apply_impulse(impulse * normal, xa);
     bodies_[b].apply_impulse(-impulse * normal, xb);
