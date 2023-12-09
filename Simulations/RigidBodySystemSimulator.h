@@ -20,8 +20,9 @@ struct box
 		linear_velocity(linear_velocity),
 	    angular_velocity(angular_velocity),
 		mass(mass),
-		inertia_tensor(compute_initial_inertia(size, mass)),
-		angular_momentum(inertia_tensor * angular_velocity),
+		initial_inv_inertia(compute_initial_inertia(size, mass)),
+		inv_inertia_tensor(initial_inv_inertia),
+		angular_momentum(inv_inertia_tensor * angular_velocity),
 		torque(0.),
 		forces(0.)
     {
@@ -36,7 +37,7 @@ struct box
     Vec3 torque;
     Vec3 forces;
     double mass;
-    Mat4 inertia_tensor; // inverted
+    Mat4 inv_inertia_tensor;
 
     Mat4 get_transform() const;
 
@@ -48,6 +49,8 @@ private:
     static Mat4 compute_initial_inertia(Vec3 size, double mass);
 
 	void update_inertia();
+
+	Mat4 initial_inv_inertia;
 };
 
 class RigidBodySystemSimulator : public Simulator

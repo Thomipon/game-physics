@@ -23,7 +23,7 @@ void box::update_inertia()
     const Mat4 rotation_mat{rotation.getRotMat()};
     Mat4 inv_rotation_mat{rotation_mat};
     inv_rotation_mat.transpose();
-    inertia_tensor = inv_rotation_mat * inertia_tensor * rotation_mat;
+    inv_inertia_tensor = inv_rotation_mat * initial_inv_inertia * rotation_mat;
 }
 
 Mat4 box::compute_initial_inertia(Vec3 size, double mass)
@@ -48,7 +48,7 @@ void box::simulate_step(float timeStep)
 
     angular_momentum += timeStep * torque;
     update_inertia();
-    angular_velocity = inertia_tensor * angular_momentum;
+    angular_velocity = inv_inertia_tensor * angular_momentum;
 	forces = 0.;
     torque = 0.;
 }
@@ -65,7 +65,7 @@ void box::apply_impulse(Vec3 impulse_normal, Vec3 position)
 }
 
 RigidBodySystemSimulator::RigidBodySystemSimulator()
-    : Simulator(), m_mouse(), m_trackmouse(), m_oldtrackmouse(), only_first_(false)
+    : Simulator(), m_mouse(), m_trackmouse(), m_oldtrackmouse(), only_first_(false), is_first_(true)
 {
 }
 
@@ -139,7 +139,6 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
             CollisionInfo collision = checkCollisionSAT(bodies_[i].get_transform(), bodies_[j].get_transform());
             if(collision.isValid)
             {
-                std::cout << "Collision of " << i << " and " << j << "\n";
                 collide_bodies(i, j, collision.collisionPointWorld, collision.normalWorld);
             }
 	    }
@@ -153,16 +152,16 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 
 void RigidBodySystemSimulator::collide_bodies(int a, int b, Vec3 collision_point, Vec3 normal)
 {
-    Vec3 xa = collision_point - bodies_[a].center_position;
-    Vec3 xb = collision_point - bodies_[b].center_position;
-    Vec3 relative_velocity = bodies_[a].get_point_velocity(xa) - bodies_[b].get_point_velocity(xb);
+    const Vec3 xa = collision_point - bodies_[a].center_position;
+    const Vec3 xb = collision_point - bodies_[b].center_position;
+    const Vec3 relative_velocity = bodies_[a].get_point_velocity(xa) - bodies_[b].get_point_velocity(xb);
 
-    Vec3 inertia_a = cross(bodies_[a].inertia_tensor * cross(xa, normal), xa);
-    Vec3 inertia_b = cross(bodies_[b].inertia_tensor * cross(xb, normal), xb);
-    double denominator = 1 / bodies_[a].mass + 1 / bodies_[b].mass + dot((inertia_a + inertia_b) , normal);
+    const Vec3 inertia_a = cross(bodies_[a].inv_inertia_tensor * cross(xa, normal), xa);
+    const Vec3 inertia_b = cross(bodies_[b].inv_inertia_tensor * cross(xb, normal), xb);
+    const double denominator = 1. / bodies_[a].mass + 1. / bodies_[b].mass + dot((inertia_a + inertia_b) , normal);
 
     // c = 0
-    double impulse = - dot(relative_velocity, normal) / denominator;
+    const double impulse = - dot(relative_velocity, normal) / denominator;
 
     bodies_[a].apply_impulse(impulse * normal, xa);
     bodies_[b].apply_impulse(-impulse * normal, xb);
