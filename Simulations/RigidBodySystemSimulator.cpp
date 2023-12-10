@@ -158,10 +158,10 @@ void RigidBodySystemSimulator::collide_bodies(int a, int b, const Vec3& collisio
 
     const Vec3 inertia_a = cross(bodies_[a].inv_inertia_tensor.transformVector(cross(xa, normal)), xa);
     const Vec3 inertia_b = cross(bodies_[b].inv_inertia_tensor.transformVector(cross(xb, normal)), xb);
-    const double denominator = 1. / bodies_[a].mass + 1. / bodies_[b].mass + dot(inertia_a + inertia_b , normal);
+    const double denominator = 1. / bodies_[a].mass + 1. / bodies_[b].mass + dot((inertia_a + inertia_b) * .5, normal);
 
     // c = 1
-    const double impulse = -2. * dot(relative_velocity, normal)/ denominator;
+    const double impulse = -2. * dot(relative_velocity, normal) / denominator;
 
     const Vec3 center_of_mass{(bodies_[a].center_position * bodies_[a].mass + bodies_[b].center_position * bodies_[b].mass)/(bodies_[a].mass + bodies_[b].mass)};
     const Vec3 force_point{collision_point - center_of_mass};
@@ -242,7 +242,7 @@ void RigidBodySystemSimulator::set_up_two_body()
 {
     bodies_.clear();
 
-    bodies_.emplace_back(Vec3{ -1., 0., 0. }, Vec3{ 0.5, 0.5, 0.5 }, Quat{ Vec3{0., 0., 1.}, 0. }, Vec3{ 0.5, 0., 0. }, Vec3{ 0. }, 3.);
+    bodies_.emplace_back(Vec3{ -1., 0., 0. }, Vec3{ 0.5, 0.5, 0.5 }, Quat{ Vec3{0., 0., 1.}, 0. }, Vec3{ 0.5, 0., 0. }, Vec3{ 0. }, 5.);
     bodies_.emplace_back(Vec3{ 0.5, 0., 0. }, Vec3{ 0.3, 0.3, 0.3 }, Quat{ Vec3{1., 1., 1.}, 0.5 * pi_half }, Vec3{ -0.25, 0., 0. }, Vec3{ 0. }, 1.);
 }
 
