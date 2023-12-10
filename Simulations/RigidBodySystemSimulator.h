@@ -22,7 +22,7 @@ struct box
 		mass(mass),
 		initial_inv_inertia(compute_initial_inertia(size, mass)),
 		inv_inertia_tensor(initial_inv_inertia),
-		angular_momentum(inv_inertia_tensor * angular_velocity),
+		angular_momentum(inv_inertia_tensor.transformVector(angular_velocity)),
 		torque(0.),
 		forces(0.)
     {

@@ -48,9 +48,9 @@ void box::simulate_step(float timeStep)
 
     angular_momentum += timeStep * torque;
     update_inertia();
-    angular_velocity = inv_inertia_tensor * angular_momentum;
-	forces = 0.;
-    torque = 0.;
+    angular_velocity = inv_inertia_tensor.transformVectorNormal(angular_momentum);
+	//forces = 0.;
+    //torque = 0.;
 }
 
 Vec3 box::get_point_velocity(Vec3 position) const
@@ -136,7 +136,9 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
     {
 	    for(int j = i+1; j < getNumberOfRigidBodies(); j++)
 	    {
-            CollisionInfo collision = checkCollisionSAT(bodies_[i].get_transform(), bodies_[j].get_transform());
+	        Mat4 body_a{bodies_[i].get_transform()};
+	        Mat4 body_b{bodies_[j].get_transform()};
+            CollisionInfo collision = checkCollisionSAT(body_a, body_b);
             if(collision.isValid)
             {
                 collide_bodies(i, j, collision.collisionPointWorld, collision.normalWorld);
@@ -156,8 +158,8 @@ void RigidBodySystemSimulator::collide_bodies(int a, int b, Vec3 collision_point
     const Vec3 xb = collision_point - bodies_[b].center_position;
     const Vec3 relative_velocity = bodies_[a].get_point_velocity(xa) - bodies_[b].get_point_velocity(xb);
 
-    const Vec3 inertia_a = cross(bodies_[a].inv_inertia_tensor * cross(xa, normal), xa);
-    const Vec3 inertia_b = cross(bodies_[b].inv_inertia_tensor * cross(xb, normal), xb);
+    const Vec3 inertia_a = cross(bodies_[a].inv_inertia_tensor.transformVector(cross(xa, normal)), xa);
+    const Vec3 inertia_b = cross(bodies_[b].inv_inertia_tensor.transformVector(cross(xb, normal)), xb);
     const double denominator = 1. / bodies_[a].mass + 1. / bodies_[b].mass + dot((inertia_a + inertia_b) , normal);
 
     // c = 0
@@ -170,7 +172,7 @@ void RigidBodySystemSimulator::collide_bodies(int a, int b, Vec3 collision_point
 void RigidBodySystemSimulator::print_solution()
 {
     std::cout << "Linear Velocity: " << getLinearVelocityOfRigidBody(0) << " Angular velocity: " << getAngularVelocityOfRigidBody(0) << "\n";
-    std::cout << "Velocity of Point (-0.3, -0.5, -0.25): " << bodies_[0].get_point_velocity(Vec3{ -0.3, -0.5, -0.25 }) << "\n";
+    std::cout << "Velocity of Point (-0.3, -0.5, -0.25): " << bodies_[0].get_point_velocity(Vec3{ -0.3, -0.5, -0.25 } - bodies_[0].center_position) << std::endl;
 }
 
 void RigidBodySystemSimulator::onClick(int x, int y)
