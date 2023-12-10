@@ -248,4 +248,10 @@ void RigidBodySystemSimulator::set_up_two_body()
 
 void RigidBodySystemSimulator::set_up_complex()
 {
+    bodies_.clear();
+
+    bodies_.emplace_back(Vec3{ -1., 0., -1. }, Vec3{ 0.5, 0.5, 0.5 }, Quat{ Vec3{0., 0., 1.}, 0. }, Vec3{ 0.5, 0., 0.5 }, Vec3{ 0. }, 3.);
+    bodies_.emplace_back(Vec3{ 0., 1., 0. }, Vec3{ 0.3, 0.6, 0.3 }, Quat{ Vec3{1., 0., 0.}, 0.5 * pi_half }, Vec3{ 0, -0.5, 0. }, Vec3{ 0. }, 3.);
+    bodies_.emplace_back(Vec3{ 0., 0., 0. }, Vec3{ 0.7, 0.5, 0.5 }, Quat{ Vec3{0., 0., 1.}, 0. }, Vec3{ 0.5, 0., 0. }, Vec3{ 0. }, 3.);
+    bodies_.emplace_back(Vec3{ 1., 0., 1. }, Vec3{ 0.2, 0.5, 0.2 }, Quat{ Vec3{1., 0., 1.}, 0.5 * pi_half }, Vec3{ -0.5, 0., -0.5 }, Vec3{ 0. }, 3.);
 }
