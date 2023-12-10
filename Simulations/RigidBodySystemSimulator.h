@@ -51,7 +51,7 @@ public:
     void apply_impulse(const Vec3& impulse_normal, const Vec3& position);
 
 private:
-    static Mat4 compute_initial_inertia(Vec3 size, double mass);
+    static Mat4 compute_initial_inertia(const Vec3& size, double mass);
 
     static Mat4 get_rotated_inertia(const Mat4& initial_inv_inertia, const Quat& rotation);
 };

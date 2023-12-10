@@ -26,7 +26,7 @@ Mat4 box::get_rotated_inertia(const Mat4& initial_inv_inertia, const Quat& rotat
     return inv_rotation_mat * initial_inv_inertia * rotation_mat;
 }
 
-Mat4 box::compute_initial_inertia(Vec3 size, double mass)
+Mat4 box::compute_initial_inertia(const Vec3& size, const double mass)
 {
     constexpr double factor = 1. / 12.;
     const double scaled_mass = factor * mass;
@@ -158,13 +158,15 @@ void RigidBodySystemSimulator::collide_bodies(int a, int b, const Vec3& collisio
 
     const Vec3 inertia_a = cross(bodies_[a].inv_inertia_tensor.transformVector(cross(xa, normal)), xa);
     const Vec3 inertia_b = cross(bodies_[b].inv_inertia_tensor.transformVector(cross(xb, normal)), xb);
-    const double denominator = 1. / bodies_[a].mass + 1. / bodies_[b].mass + dot((inertia_a + inertia_b) , normal);
+    const double denominator = 1. / bodies_[a].mass + 1. / bodies_[b].mass + dot(inertia_a + inertia_b , normal);
 
     // c = 1
-    const double impulse = -2. * dot(relative_velocity, normal) / denominator;
+    const double impulse = -2. * dot(relative_velocity, normal)/ denominator;
 
-    bodies_[a].apply_impulse(impulse * normal, xa);
-    bodies_[b].apply_impulse(-impulse * normal, xb);
+    const Vec3 center_of_mass{(bodies_[a].center_position * bodies_[a].mass + bodies_[b].center_position * bodies_[b].mass)/(bodies_[a].mass + bodies_[b].mass)};
+    const Vec3 force_point{collision_point - center_of_mass};
+    bodies_[a].apply_impulse(impulse * normal, force_point);
+    bodies_[b].apply_impulse(-impulse * normal, force_point);
 }
 
 void RigidBodySystemSimulator::print_solution()
