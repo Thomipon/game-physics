@@ -18,12 +18,12 @@ Mat4 box::get_transform() const
     return scale_mat * rotation.getRotMat() * translation_mat;
 }
 
-void box::update_inertia()
+Mat4 box::get_rotated_inertia(const Mat4& initial_inv_inertia, const Quat& rotation)
 {
     const Mat4 rotation_mat{rotation.getRotMat()};
     Mat4 inv_rotation_mat{rotation_mat};
     inv_rotation_mat.transpose();
-    inv_inertia_tensor = inv_rotation_mat * initial_inv_inertia * rotation_mat;
+    return inv_rotation_mat * initial_inv_inertia * rotation_mat;
 }
 
 Mat4 box::compute_initial_inertia(Vec3 size, double mass)
@@ -47,7 +47,7 @@ void box::simulate_step(float timeStep)
     rotation = rotation.unit();
 
     angular_momentum += timeStep * torque;
-    update_inertia();
+    inv_inertia_tensor = get_rotated_inertia(initial_inv_inertia_, rotation);
     angular_velocity = inv_inertia_tensor.transformVectorNormal(angular_momentum);
 	//forces = 0.;
     //torque = 0.;

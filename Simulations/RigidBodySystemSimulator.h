@@ -19,12 +19,12 @@ struct box
 		rotation(rotation.unit()),
 		linear_velocity(linear_velocity),
 	    angular_velocity(angular_velocity),
-		mass(mass),
-		initial_inv_inertia(compute_initial_inertia(size, mass)),
-		inv_inertia_tensor(initial_inv_inertia),
-		angular_momentum(inv_inertia_tensor.transformVector(angular_velocity)),
 		torque(0.),
-		forces(0.)
+		forces(0.),
+		mass(mass),
+		initial_inv_inertia_(compute_initial_inertia(size, mass)),
+		inv_inertia_tensor(get_rotated_inertia(initial_inv_inertia_, rotation.unit())),
+		angular_momentum(inv_inertia_tensor.transformVector(angular_velocity))
     {
     }
 
@@ -33,11 +33,16 @@ struct box
     Quat rotation;
     Vec3 linear_velocity;
     Vec3 angular_velocity;
-    Vec3 angular_momentum;
     Vec3 torque;
     Vec3 forces;
     double mass;
+	
+private:
+	Mat4 initial_inv_inertia_;
+
+public:	
     Mat4 inv_inertia_tensor;
+	Vec3 angular_momentum;
 
     Mat4 get_transform() const;
 
@@ -48,9 +53,7 @@ struct box
 private:
     static Mat4 compute_initial_inertia(Vec3 size, double mass);
 
-	void update_inertia();
-
-	Mat4 initial_inv_inertia;
+    static Mat4 get_rotated_inertia(const Mat4& initial_inv_inertia, const Quat& rotation);
 };
 
 class RigidBodySystemSimulator : public Simulator
