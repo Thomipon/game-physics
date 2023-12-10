@@ -47,8 +47,8 @@ public:
     Mat4 get_transform() const;
 
     void simulate_step(float timeStep);
-    Vec3 get_point_velocity(Vec3 position) const;
-    void apply_impulse(Vec3 impulse_normal, Vec3 position);
+    Vec3 get_point_velocity(const Vec3& position) const;
+    void apply_impulse(const Vec3& impulse_normal, const Vec3& position);
 
 private:
     static Mat4 compute_initial_inertia(Vec3 size, double mass);
@@ -78,7 +78,7 @@ public:
     Vec3 getPositionOfRigidBody(int i);
     Vec3 getLinearVelocityOfRigidBody(int i);
     Vec3 getAngularVelocityOfRigidBody(int i);
-    void applyForceOnBody(int i, Vec3 loc, Vec3 force);
+    void applyForceOnBody(int i, const Vec3& loc, const Vec3& force);
     void addRigidBody(Vec3 position, Vec3 size, int mass);
     void setOrientationOf(int i, const Quat& orientation);
     void setVelocityOf(int i, const Vec3& velocity);
@@ -103,5 +103,5 @@ private:
     void set_up_complex();
 
     void print_solution();
-    void collide_bodies(int a, int b, Vec3 collision_point,Vec3 normal);
+    void collide_bodies(int a, int b, const Vec3& collision_point, const Vec3& normal);
 };

@@ -18,7 +18,7 @@
 using namespace DirectX;
 using namespace GamePhysics;
 
-//#define ADAPTIVESTEP
+#define ADAPTIVESTEP
 
 //#define TEMPLATE_DEMO
 //#define MASS_SPRING_SYSTEM
