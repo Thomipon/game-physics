@@ -185,20 +185,6 @@ void RigidBodySystemSimulator::onClick(int x, int y)
 
 void RigidBodySystemSimulator::interact()
 {
-    /*
-    DirectX::XMMATRIX camera_xm{ DUC->g_camera.GetProjMatrix() * DUC->g_camera.GetViewMatrix() * DUC->g_camera.GetWorldMatrix() };//* DUC->g_camera.GetProjMatrix()};
-    Mat4 camera{ camera_xm };
-    camera.inverse();
-
-    Vec3 screen_position{ .001*x, .001*y, 0 };
-    Vec3 click_position{ camera.transformVector(screen_position) };
-
-    Vec3 eye_point{ DUC->g_camera.GetEyePt() };
-    Vec3 look_at_point{ DUC->g_camera.GetLookAtPt() };
-    Vec3 camera_direction{ look_at_point - eye_point };
-
-    
-    std::cout << click_position << std::endl;*/
     for (auto & body : bodies_)
     {
         body.linear_velocity = body.linear_velocity * 2.;
