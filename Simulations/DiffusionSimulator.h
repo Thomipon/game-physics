@@ -22,9 +22,12 @@ public:
     double get_grid_value(int x, int y) const;
     double get_color_value(int i, int j) const;
     double laplace(int i, int j) const;
+    int get_index(int x, int y) const;
+
+    const std::vector<double>& get_raw_data() const;
 
 private:
-    vector<double> temperatures_;
+    std::vector<double> temperatures_;
 
     double& get_grid_value_ref(int x, int y);
 };

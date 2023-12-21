@@ -13,7 +13,7 @@ void Grid::set_grid_value(const int x, const int y, const double value)
 
 double Grid::get_grid_value(const int x, const int y) const
 {
-    return temperatures_.at(x + y * width);
+    return temperatures_.at(get_index(x, y));
 }
 
 double Grid::get_color_value(const int i, const int j) const
@@ -33,9 +33,19 @@ double Grid::laplace(const int i, const int j) const
     return x_le + x_ge + y_le + y_ge - 4. * get_grid_value(i, j);
 }
 
+int Grid::get_index(const int x, const int y) const
+{
+    return x + y * width;
+}
+
+const std::vector<double>& Grid::get_raw_data() const
+{
+    return temperatures_;
+}
+
 double& Grid::get_grid_value_ref(const int x, const int y)
 {
-    return temperatures_.at(x + y * width);
+    return temperatures_.at(get_index(x, y));
 }
 
 DiffusionSimulator::DiffusionSimulator() : grid_{16, 16}
@@ -108,14 +118,14 @@ void DiffusionSimulator::diffuseTemperatureExplicit(double timeStep)
     {
         for (int j = 0; j < grid_.length; ++j)
         {
-            deltas[i + j * grid_.width] = grid_.laplace(i, j);
+            deltas[grid_.get_index(i, j)] = grid_.laplace(i, j);
         }
     }
     for (int i = 0; i < grid_.width; ++i)
     {
         for (int j = 0; j < grid_.length; ++j)
         {
-            grid_.set_grid_value(i, j, deltas[i + j * grid_.width] * timeStep + grid_.get_grid_value(i, j));
+            grid_.set_grid_value(i, j, deltas[grid_.get_index(i, j)] * timeStep + grid_.get_grid_value(i, j));
         }
     }
 
@@ -128,19 +138,40 @@ void DiffusionSimulator::diffuseTemperatureImplicit(double timeStep)
     // solve A T = b
 
     // This is just an example to show how to work with the PCG solver,
-    const int nx = 5;
-    const int ny = 5;
-    const int nz = 5;
-    const int N = nx * ny * nz;
+    const int N = grid_.width * grid_.length;
 
     SparseMatrix<Real> A(N);
-    std::vector<Real> b(N);
+    const std::vector<Real> b(grid_.get_raw_data());
+    const double lambda{1.};
 
-    // This is the part where you have to assemble the system matrix A and the right-hand side b!
+    for (int i = 0; i < grid_.width; ++i)
+    {
+        for (int j = 0; j < grid_.length; ++j)
+        {
+            const int index{grid_.get_index(i, j)};
+            A.set_element(index, index, 1. - 4. * lambda);
+            if (index > 0)
+            {
+                A.set_element(index,index - 1, -lambda);
+            }
+            if (index < A.n - 1)
+            {
+                A.set_element(index,index + 1, -lambda);
+            }
+            if (index < A.n - grid_.width)
+            {
+                A.set_element(index, index + grid_.width, -lambda);
+            }
+            if (index > A.n + grid_.width)
+            {
+                A.set_element(index, index - grid_.width, -lambda);
+            }
+        }
+    }
 
     // perform solve
-    Real pcg_target_residual = 1e-05;
-    Real pcg_max_iterations = 1000;
+    const Real pcg_target_residual = 1e-05;
+    const Real pcg_max_iterations = 1000;
     Real ret_pcg_residual = 1e10;
     int ret_pcg_iterations = -1;
 
@@ -154,7 +185,15 @@ void DiffusionSimulator::diffuseTemperatureImplicit(double timeStep)
     solver.solve(A, b, x, ret_pcg_residual, ret_pcg_iterations, 0);
 
     // Final step is to extract the grid temperatures from the solution vector x
-    // to be implemented
+    for (int i = 0; i < grid_.width; ++i)
+    {
+        for (int j = 0; j < grid_.length; ++j)
+        {
+            grid_.set_grid_value(i, j, x[grid_.get_index(i, j)]);
+        }
+    }
+
+    zero_boundary();
 }
 
 
