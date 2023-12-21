@@ -5,7 +5,20 @@
 #include "vectorbase.h"
 
 class Grid {
-	// to be implemented
+public:
+	Grid(int length, int width) : length{ length }, width{ width }, temperatures(width, vector<double>(length, 0.))
+	{ 
+	}
+
+	int length;
+	int width;
+
+	void clearGridValues();
+	void setGridValue(int x, int y, double value);
+	double getGridValue(int x, int y) const;
+
+private:
+	vector<vector<double>> temperatures;
 };
 
 
@@ -41,6 +54,8 @@ private:
 	Point2D m_trackmouse;
 	Point2D m_oldtrackmouse;
 	Grid T;
+
+	void setUpScene();
 };
 
 #endif

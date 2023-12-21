@@ -2,8 +2,27 @@
 #include "pcgsolver.h"
 using namespace std;
 
+void Grid::clearGridValues()
+{
+	for (auto vector : temperatures)
+	{
+		std::fill(vector.begin(), vector.end(), 0.);
 
-DiffusionSimulator::DiffusionSimulator()
+	}
+}
+
+void Grid::setGridValue(int x, int y, double value)
+{
+	temperatures[x][y] = value;
+}
+
+double Grid::getGridValue(int x, int y) const
+{
+	return temperatures[x][y];
+}
+
+
+DiffusionSimulator::DiffusionSimulator() : T{16, 16}
 {
 	m_iTestCase = 0;
 	m_vfMovableObjectPos = Vec3();
@@ -37,6 +56,8 @@ void DiffusionSimulator::notifyCaseChanged(int testCase)
 	//
 	// to be implemented
 	//
+	setUpScene();
+
 	switch (m_iTestCase)
 	{
 	case 0:
@@ -49,6 +70,12 @@ void DiffusionSimulator::notifyCaseChanged(int testCase)
 		cout << "Empty Test!\n";
 		break;
 	}
+}
+
+void DiffusionSimulator::setUpScene()
+{
+	T.clearGridValues();
+	// insert some values
 }
 
 void DiffusionSimulator::diffuseTemperatureExplicit() {
@@ -111,6 +138,18 @@ void DiffusionSimulator::drawObjects()
 {
 	// to be implemented
 	//visualization
+	DUC->setUpLighting(Vec3(0, 0, 0), 0.4 * Vec3(1, 1, 1), 2000.0, Vec3(0.5, 0.5, 0.5));
+	double stepX = 1. / (T.width - 1);
+	double stepY = 1. / (T.length - 1);
+
+	for (int i = 0; i < T.width; i++)
+	{
+		for (int j = 0; j < T.length; j++)
+		{
+			this->DUC->drawSphere(Vec3{ -0.5 + i * stepX, -0.5 + j * stepY, 0. }, Vec3{ 0.05 });
+			// color 
+		}
+	}
 }
 
 
