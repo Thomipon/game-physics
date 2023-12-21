@@ -149,6 +149,7 @@ void DiffusionSimulator::diffuseTemperatureImplicit(double timeStep)
         std::vector<Real> values{};
         indices.reserve(5);
         values.reserve(5);
+        
         indices.push_back(index);
         values.push_back(1. - 4. * lambda);
         if (index > 0)
@@ -166,7 +167,7 @@ void DiffusionSimulator::diffuseTemperatureImplicit(double timeStep)
             indices.push_back(index + grid_.width);
             values.push_back(-lambda);
         }
-        if (index > A.n + grid_.width)
+        if (index > grid_.width)
         {
             indices.push_back(index - grid_.width);
             values.push_back(-lambda);
