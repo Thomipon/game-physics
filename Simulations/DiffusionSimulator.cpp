@@ -108,7 +108,6 @@ void DiffusionSimulator::set_up_scene()
     grid_.set_grid_value(10, 11, 1000.);
     grid_.set_grid_value(11, 11, 1000.);
     grid_.set_grid_value(1, 1, 10000.);
-
 }
 
 void DiffusionSimulator::diffuseTemperatureExplicit(double timeStep)
@@ -142,31 +141,38 @@ void DiffusionSimulator::diffuseTemperatureImplicit(double timeStep)
 
     SparseMatrix<Real> A(N);
     const std::vector<Real> b(grid_.get_raw_data());
-    const double lambda{1.};
+    const double lambda{timeStep};
 
-    for (int i = 0; i < grid_.width; ++i)
+    for (int index = 0; index < A.n; ++index)
     {
-        for (int j = 0; j < grid_.length; ++j)
+        std::vector<int> indices{};
+        std::vector<Real> values{};
+        indices.reserve(5);
+        values.reserve(5);
+        indices.push_back(index);
+        values.push_back(1. - 4. * lambda);
+        if (index > 0)
         {
-            const int index{grid_.get_index(i, j)};
-            A.set_element(index, index, 1. - 4. * lambda);
-            if (index > 0)
-            {
-                A.set_element(index,index - 1, -lambda);
-            }
-            if (index < A.n - 1)
-            {
-                A.set_element(index,index + 1, -lambda);
-            }
-            if (index < A.n - grid_.width)
-            {
-                A.set_element(index, index + grid_.width, -lambda);
-            }
-            if (index > A.n + grid_.width)
-            {
-                A.set_element(index, index - grid_.width, -lambda);
-            }
+            indices.push_back(index - 1);
+            values.push_back(-lambda);
         }
+        if (index < A.n - 1)
+        {
+            indices.push_back(index + 1);
+            values.push_back(-lambda);
+        }
+        if (index < A.n - grid_.width)
+        {
+            indices.push_back(index + grid_.width);
+            values.push_back(-lambda);
+        }
+        if (index > A.n + grid_.width)
+        {
+            indices.push_back(index - grid_.width);
+            values.push_back(-lambda);
+        }
+
+        A.add_sparse_row(index, indices, values);
     }
 
     // perform solve
