@@ -18,6 +18,7 @@ using namespace GamePhysics;
 
 class Simulator{
 public:
+	virtual ~Simulator() = default;
 	// Attributes
 	int m_iTestCase;
 	DrawingUtilitiesClass * DUC;
