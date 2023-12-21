@@ -151,7 +151,7 @@ void DiffusionSimulator::diffuseTemperatureImplicit(double timeStep)
         values.reserve(5);
         
         indices.push_back(index);
-        values.push_back(1. - 4. * lambda);
+        values.push_back(1. + 4. * lambda);
         if (index > 0)
         {
             indices.push_back(index - 1);
