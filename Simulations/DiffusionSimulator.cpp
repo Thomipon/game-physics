@@ -38,6 +38,13 @@ int Grid::get_index(const int x, const int y) const
     return x + y * width;
 }
 
+void Grid::resize(int l, int w)
+{
+    length = l;
+    width = w;
+    temperatures_.resize(width * length);
+}
+
 const std::vector<double>& Grid::get_raw_data() const
 {
     return temperatures_;
@@ -55,6 +62,8 @@ DiffusionSimulator::DiffusionSimulator() : grid_{16, 16}
     m_vfMovableObjectFinalPos = Vec3();
     m_vfRotate = Vec3();
     // rest to be implemented
+    m_newGridLength = grid_.length;
+    m_newGridWidth = grid_.width;
 }
 
 const char* DiffusionSimulator::getTestCasesStr()
@@ -73,6 +82,9 @@ void DiffusionSimulator::initUI(DrawingUtilitiesClass* DUC)
 {
     this->DUC = DUC;
     // to be implemented
+    TwAddSeparator(DUC->g_pTweakBar, "", "");
+    TwAddVarRW(DUC->g_pTweakBar, "Grid length", TW_TYPE_INT32, &m_newGridLength, "min=16");
+    TwAddVarRW(DUC->g_pTweakBar, "Grid width", TW_TYPE_INT32, &m_newGridWidth, "min=16");
 }
 
 void DiffusionSimulator::notifyCaseChanged(int testCase)
@@ -206,6 +218,8 @@ void DiffusionSimulator::diffuseTemperatureImplicit(double timeStep)
 
 void DiffusionSimulator::simulateTimestep(float timeStep)
 {
+    resize_grid();
+
     // update current setup for each frame
     switch (m_iTestCase)
     {
@@ -218,6 +232,15 @@ void DiffusionSimulator::simulateTimestep(float timeStep)
     default:
         throw std::exception{"Illegal test case"};
     }
+}
+
+void DiffusionSimulator::resize_grid()
+{
+    if (grid_.length == m_newGridLength && grid_.width == m_newGridWidth)
+        return;
+
+    grid_.resize(m_newGridLength, m_newGridWidth);
+    set_up_scene();
 }
 
 void DiffusionSimulator::externalForcesCalculations(float timeElapsed)
@@ -236,7 +259,7 @@ void DiffusionSimulator::drawObjects()
         {
             const double color{grid_.get_color_value(i, j)};
             DUC->setUpLighting(Vec3(0.), Vec3(1.), 10000000., Vec3(1., color, color));
-            this->DUC->drawSphere(Vec3{-0.5 + i * step_x, color, -0.5 + j * step_y}, Vec3{0.05});
+            this->DUC->drawSphere(Vec3{-0.5 + i * step_x, color * 0.5, -0.5 + j * step_y}, Vec3{0.05});
         }
     }
 }

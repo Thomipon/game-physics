@@ -23,6 +23,7 @@ public:
     double get_color_value(int i, int j) const;
     double laplace(int i, int j) const;
     int get_index(int x, int y) const;
+    void resize(int l, int w);
 
     const std::vector<double>& get_raw_data() const;
 
@@ -67,8 +68,11 @@ private:
     Point2D m_trackmouse;
     Point2D m_oldtrackmouse;
     Grid grid_;
+    int m_newGridLength;
+    int m_newGridWidth;
 
     void set_up_scene();
+    void resize_grid();
 };
 
 #endif
