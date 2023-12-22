@@ -221,6 +221,7 @@ void DiffusionSimulator::simulateTimestep(float timeStep)
     resize_grid();
 
     // update current setup for each frame
+    // diffusion coefficient = 1
     switch (m_iTestCase)
     {
     case 0:
