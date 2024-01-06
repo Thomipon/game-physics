@@ -18,6 +18,11 @@ Mat4 box::get_transform() const
     return scale_mat * rotation.getRotMat() * translation_mat;
 }
 
+Vec3 box::spring_acceleration(const Vec3& spring_force, const Vec3& linear_velocity) const
+{
+    return  1./ mass * (spring_force - 0./*std::min(1., norm(spring_force)) */* linear_velocity);
+}
+
 Mat4 box::get_rotated_inertia(const Mat4& initial_inv_inertia, const Quat& rotation)
 {
     const Mat4 rotation_mat{rotation.getRotMat()};
@@ -41,12 +46,12 @@ Mat4 box::compute_initial_inertia(const Vec3& size, const double mass)
 void box::simulate_step(float timeStep)
 {
     center_position += linear_velocity * timeStep;
-    linear_velocity += timeStep * forces / mass;
+    linear_velocity += timeStep * (forces / mass + spring_acceleration(spring_force, get_point_velocity(center_position)));
 
     rotation += timeStep * .5 * rotation * Quat{ 0., angular_velocity.x, angular_velocity.y, angular_velocity.z };
     rotation = rotation.unit();
 
-    angular_momentum += timeStep * torque;
+    angular_momentum += timeStep * (torque + spring_torque);
     inv_inertia_tensor = get_rotated_inertia(initial_inv_inertia_, rotation);
     angular_velocity = inv_inertia_tensor.transformVectorNormal(angular_momentum);
 }
@@ -91,6 +96,12 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateConte
     {
         DUC->drawRigidBody(body.get_transform());
     }
+    for (const auto& spring : springs_)
+    {
+        DUC->beginLine();
+        DUC->drawLine(bodies_.at(spring.point1).center_position, Vec3{0., 0., 1.}, bodies_.at(spring.point2).center_position, Vec3{0., 1., 1.});
+        DUC->endLine();
+    }
 }
 
 void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
@@ -123,6 +134,8 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
     if (only_first_ && !is_first_)
         return;
+
+    compute_spring_forces();
 
     for (auto& body : bodies_)
     {
@@ -163,10 +176,36 @@ void RigidBodySystemSimulator::collide_bodies(int a, int b, const Vec3& collisio
     // c = 1
     const double impulse = -2. * dot(relative_velocity, normal) / denominator;
 
-    const Vec3 center_of_mass{(bodies_[a].center_position * bodies_[a].mass + bodies_[b].center_position * bodies_[b].mass)/(bodies_[a].mass + bodies_[b].mass)};
-    const Vec3 force_point{collision_point - center_of_mass};
-    bodies_[a].apply_impulse(impulse * normal, force_point);
-    bodies_[b].apply_impulse(-impulse * normal, force_point);
+    //const Vec3 center_of_mass{(bodies_[a].center_position * bodies_[a].mass + bodies_[b].center_position * bodies_[b].mass)/(bodies_[a].mass + bodies_[b].mass)};
+    //const Vec3 force_point{collision_point - center_of_mass};
+    bodies_[a].apply_impulse(impulse * normal, xa);
+    bodies_[b].apply_impulse(-impulse * normal, xb);
+}
+
+void RigidBodySystemSimulator::applySpringForceOnBody(int i, const Vec3& loc, const Vec3& force)
+{
+    bodies_[i].spring_force = force;
+    bodies_[i].spring_torque = cross(loc - bodies_[i].center_position, force);
+}
+
+void RigidBodySystemSimulator::compute_spring_force(const spring& spring)
+{
+    auto& b1 = bodies_.at(spring.point1);
+    auto& b2 = bodies_.at(spring.point2);
+    const Vec3 direction{b1.center_position - b2.center_position};
+    const double current_length{norm(direction)};
+    const Vec3 force{spring.stiffness * (current_length - spring.initial_length) / current_length * direction};
+    applySpringForceOnBody(spring.point1, b1.center_position, -force);
+    applySpringForceOnBody(spring.point2, b2.center_position, force);
+    //std::cout << "Force:\t" << force << ", Length:\t" << current_length << std::endl;
+}
+
+void RigidBodySystemSimulator::compute_spring_forces()
+{
+    for (const auto& spring : springs_)
+    {
+        compute_spring_force(spring);
+    }
 }
 
 void RigidBodySystemSimulator::print_solution()
@@ -259,9 +298,14 @@ void RigidBodySystemSimulator::set_up_two_body()
 void RigidBodySystemSimulator::set_up_complex()
 {
     bodies_.clear();
+    springs_.clear();
 
-    bodies_.emplace_back(Vec3{ -1., 0., -1. }, Vec3{ 0.5, 0.5, 0.5 }, Quat{ Vec3{0., 0., 1.}, 0. }, Vec3{ 0.5, 0., 0.5 }, Vec3{ 0. }, 3.);
-    bodies_.emplace_back(Vec3{ 0., 1., 0. }, Vec3{ 0.3, 0.6, 0.3 }, Quat{ Vec3{1., 0., 0.}, 0.5 * pi_half }, Vec3{ 0, -0.5, 0. }, Vec3{ 0. }, 3.);
+    bodies_.emplace_back(Vec3{ -1., 0., -1. }, Vec3{ 0.5, 0.5, 0.5 }, Quat{ Vec3{0., 0., 1.}, 0. }, Vec3{ 1., 0., .5 }, Vec3{ 0. }, 3.);
+    bodies_.emplace_back(Vec3{ 0., 1., 0. }, Vec3{ 0.3, 0.6, 0.3 }, Quat{ Vec3{1., 0., 0.}, 0.5 * pi_half }, Vec3{ 1., 0., .5 }, Vec3{ 0. }, 3.);
     bodies_.emplace_back(Vec3{ 0., 0., 0. }, Vec3{ 0.7, 0.5, 0.5 }, Quat{ Vec3{0., 0., 1.}, 0. }, Vec3{ 0.5, 0., 0. }, Vec3{ 0. }, 3.);
     bodies_.emplace_back(Vec3{ 1., 0., 1. }, Vec3{ 0.2, 0.5, 0.2 }, Quat{ Vec3{1., 0., 1.}, 0.5 * pi_half }, Vec3{ -0.5, 0., -0.5 }, Vec3{ 0. }, 3.);
+
+    springs_.emplace_back(0, 1, 3.f, 40.f);
+    springs_.emplace_back(2, 3, 1.f, 40.f);
+
 }
