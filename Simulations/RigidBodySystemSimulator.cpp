@@ -224,9 +224,58 @@ void RigidBodySystemSimulator::onClick(int x, int y)
 
 void RigidBodySystemSimulator::interact()
 {
-    for (auto & body : bodies_)
+    Vec3 clickPosition{2. * m_trackmouse.x / DUC->screenWidth - 1., -2. * m_trackmouse.y / DUC->screenHeight + 1., 0.};
+    std::cout << "Clicked at " << clickPosition << std::endl;
+    
+    Mat4 pMat{DUC->g_camera.GetProjMatrix()};
+    Mat4 vMat{DUC->g_camera.GetViewMatrix()};
+    Mat4 wMat{DUC->g_camera.GetWorldMatrix()};
+    Vec3 worldClickPosition{wMat.inverse().transformVector(vMat.inverse().transformVector(pMat.inverse().transformVector(clickPosition)))};
+    std::cout << "Clicked at " << worldClickPosition << std::endl;
+    
+    auto position{DUC->g_camera.GetEyePt()};
+    auto lookAt{DUC->g_camera.GetLookAtPt()};
+    Vec3 cameraPosition{position};
+    Vec3 lookingAt{lookAt};
+    Vec3 cameraDirection{lookingAt - cameraPosition};
+    normalize(cameraDirection);
+    std::cout << "Camera Position: " << cameraPosition << ", Looking at: " << lookingAt << ", Direction:" << cameraDirection << std::endl;
+
+    click_on_box(worldClickPosition, cameraDirection);
+}
+
+void RigidBodySystemSimulator::click_on_box(const Vec3& clickPosition, const Vec3& direction)
+{
+    int nearest = -1;
+    float minDistance = INFINITY;
+    Vec3 collisionPoint{0.};
+
+    // inaccurate
+    Vec3 rot = cross(Vec3{0., 0., 1.}, direction);
+    Quat rayDirection{rot, std::acos(dot(Vec3{0., 0., 1.}, direction))};
+    
+    box ray{clickPosition, Vec3{0.01, 0.01, 100.0}, rayDirection.unit(), Vec3{0.}, Vec3{0.}, 1};
+    //bodies_.emplace_back(ray);
+    
+    for(int i = 0; i < getNumberOfRigidBodies(); i++)
     {
-        body.linear_velocity = body.linear_velocity * 2.;
+        CollisionInfo info = checkCollisionSAT(ray.get_transform(), bodies_[i].get_transform());
+        if (info.isValid)
+        {
+            float distance = norm((info.collisionPointWorld - clickPosition));
+            if(distance < minDistance)
+            {
+                nearest = i;
+                minDistance = distance;
+                collisionPoint = info.collisionPointWorld;
+            }
+        }
+    }
+
+    if(nearest > -1)
+    {
+        std::cout << "Collision with " << nearest << " at "<< collisionPoint << std::endl;
+        // do something with the box
     }
 }
 

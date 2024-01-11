@@ -133,4 +133,5 @@ private:
     void compute_spring_forces();
 
     void interact();
+    void click_on_box(const Vec3& clickPosition, const Vec3& direction);
 };

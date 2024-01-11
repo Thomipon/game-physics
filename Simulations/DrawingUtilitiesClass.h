@@ -57,6 +57,8 @@ PrimitiveBatch<VertexPositionNormalColor>* g_pPrimitiveBatchPositionNormalColor;
 std::unique_ptr<GeometricPrimitive> g_pSphere;
 std::unique_ptr<GeometricPrimitive> g_pTeapot;
 
+	int screenWidth;
+	int screenHeight;
 // Constructor
 DrawingUtilitiesClass(){
 	g_pTweakBar = nullptr;
@@ -262,6 +264,8 @@ void updateScreenSize(int width, int height)
 
     // Inform AntTweakBar about back buffer resolution change
   	TwWindowSize(width,height);
+	screenWidth = width;
+	screenHeight = height;
 }
 
 void update(float fElapsedTime)
