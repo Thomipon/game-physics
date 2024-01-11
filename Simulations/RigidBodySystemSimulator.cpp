@@ -236,12 +236,12 @@ void RigidBodySystemSimulator::interact()
     auto position{DUC->g_camera.GetEyePt()};
     auto lookAt{DUC->g_camera.GetLookAtPt()};
     Vec3 cameraPosition{position};
-    Vec3 lookingAt{lookAt};
+    Vec3 lookingAt{worldClickPosition};
     Vec3 cameraDirection{lookingAt - cameraPosition};
     normalize(cameraDirection);
     std::cout << "Camera Position: " << cameraPosition << ", Looking at: " << lookingAt << ", Direction:" << cameraDirection << std::endl;
-
-    click_on_box(cameraPosition, cameraDirection);
+    
+    click_on_box(worldClickPosition, cameraDirection);
 }
 
 void RigidBodySystemSimulator::click_on_box(const Vec3& clickPosition, const Vec3& direction)
