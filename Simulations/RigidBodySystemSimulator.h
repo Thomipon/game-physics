@@ -13,7 +13,7 @@ const double pi_half{std::acos(0.)};
 struct box
 {
     box(const Vec3& center, const Vec3& size, const Quat& rotation, const Vec3& linear_velocity,
-        const Vec3& angular_velocity, const double& mass) :
+        const Vec3& angular_velocity, const double& mass, const bool is_static = false) :
         center_position(center),
         size(size),
         rotation(rotation.unit()),
@@ -24,6 +24,7 @@ struct box
         spring_force(0.),
         spring_torque(0.),
         mass(mass),
+        is_static(is_static),
         initial_inv_inertia_(compute_initial_inertia(size, mass)),
         inv_inertia_tensor(get_rotated_inertia(initial_inv_inertia_, rotation.unit())),
         angular_momentum(inv_inertia_tensor.transformVector(angular_velocity))
@@ -40,6 +41,7 @@ struct box
     Vec3 spring_force;
     Vec3 spring_torque;
     double mass;
+    bool is_static;
 
 private:
     Mat4 initial_inv_inertia_;

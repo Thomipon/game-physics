@@ -45,9 +45,16 @@ Mat4 box::compute_initial_inertia(const Vec3& size, const double mass)
 
 void box::simulate_step(float timeStep)
 {
+    if (is_static)
+        return;
+
     center_position += linear_velocity * timeStep;
+    Vec3 attraction_force{center_position};
+    normalize(attraction_force);
+    attraction_force += Vec3{0., 9.81, 0.};
     linear_velocity += timeStep * (forces / mass + spring_acceleration(spring_force,
-                                                                       get_point_velocity(center_position)));
+                                                                       get_point_velocity(center_position)) -
+        attraction_force);
 
     rotation += timeStep * .5 * rotation * Quat{0., angular_velocity.x, angular_velocity.y, angular_velocity.z};
     rotation = rotation.unit();
@@ -162,8 +169,8 @@ void RigidBodySystemSimulator::collide_bodies(int a, int b, const Vec3& collisio
     // c = 1
     const double impulse = -2. * dot(relative_velocity, normal) / denominator;
 
-    //const Vec3 center_of_mass{(bodies_[a].center_position * bodies_[a].mass + bodies_[b].center_position * bodies_[b].mass)/(bodies_[a].mass + bodies_[b].mass)};
-    //const Vec3 force_point{collision_point - center_of_mass};
+    const Vec3 center_of_mass{(bodies_[a].center_position * bodies_[a].mass + bodies_[b].center_position * bodies_[b].mass)/(bodies_[a].mass + bodies_[b].mass)};
+    const Vec3 force_point{collision_point - center_of_mass};
     bodies_[a].apply_impulse(impulse * normal, xa);
     bodies_[b].apply_impulse(-impulse * normal, xb);
 }
@@ -212,14 +219,17 @@ void RigidBodySystemSimulator::onClick(int x, int y)
 
 void RigidBodySystemSimulator::interact()
 {
-    const Vec3 click_position{2. * m_trackmouse.x / DUC->screenWidth - 1., -2. * m_trackmouse.y / DUC->screenHeight + 1., 0.};
+    const Vec3 click_position{
+        2. * m_trackmouse.x / DUC->screenWidth - 1., -2. * m_trackmouse.y / DUC->screenHeight + 1., 0.
+    };
     std::cout << "Clicked at " << click_position << std::endl;
 
     Mat4 p_mat{DUC->g_camera.GetProjMatrix()};
     Mat4 v_mat{DUC->g_camera.GetViewMatrix()};
     Mat4 w_mat{DUC->g_camera.GetWorldMatrix()};
     const Vec3 world_click_position{
-        w_mat.inverse().transformVector(v_mat.inverse().transformVector(p_mat.inverse().transformVector(click_position)))
+        w_mat.inverse().transformVector(
+            v_mat.inverse().transformVector(p_mat.inverse().transformVector(click_position)))
     };
     std::cout << "Clicked at " << world_click_position << std::endl;
 
@@ -263,7 +273,7 @@ void RigidBodySystemSimulator::click_on_box(const Vec3& clickPosition, const Vec
     if (nearest > -1)
     {
         std::cout << "Collision with " << nearest << " at " << collision_point << std::endl;
-        bodies_[nearest].apply_impulse(10* direction, collision_point);
+        bodies_[nearest].apply_impulse(10 * direction, collision_point);
     }
 }
 
