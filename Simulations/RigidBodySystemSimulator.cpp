@@ -1,6 +1,6 @@
 ﻿#include "RigidBodySystemSimulator.h"
 
-CollisionInfo RigidBodySystemSimulator::check_collision_safe(Mat4& body_a, Mat4& body_b) const
+CollisionInfo RigidBodySystemSimulator::check_collision_safe(Mat4& body_a, Mat4& body_b)
 {
     if (std::isnan(XMMatrixDeterminant((body_a * body_b).toDirectXMatrix()).m128_f32[0]))
         return CollisionInfo{false, Vec3{}, Vec3{}, -1.};
@@ -231,7 +231,6 @@ void RigidBodySystemSimulator::compute_spring_force(const spring& spring)
     const Vec3 force{spring.stiffness * (current_length - spring.initial_length) / current_length * direction};
     applySpringForceOnBody(spring.point1, b1.center_position, -force);
     applySpringForceOnBody(spring.point2, b2.center_position, force);
-    //std::cout << "Force:\t" << force << ", Length:\t" << current_length << std::endl;
 }
 
 void RigidBodySystemSimulator::compute_spring_forces()
@@ -287,8 +286,7 @@ void RigidBodySystemSimulator::click_on_box(const Vec3& clickPosition, const Vec
     int nearest = -1;
     float min_distance = INFINITY;
     Vec3 collision_point{0.};
-
-    // inaccurate
+    
     Vec3 rot = cross(Vec3{0., 0., 1.}, direction);
     normalize(rot);
     const Quat ray_direction{rot, std::acos(dot(Vec3{0., 0., 1.}, direction))};

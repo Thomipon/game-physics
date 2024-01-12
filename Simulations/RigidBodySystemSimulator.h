@@ -118,7 +118,7 @@ public:
     void drawFrame(ID3D11DeviceContext* pd3dImmediateContext) override;
     void notifyCaseChanged(int testCase) override;
     void externalForcesCalculations(float timeElapsed) override;
-    CollisionInfo check_collision_safe(Mat4& body_a, Mat4& body_b) const;
+    static CollisionInfo check_collision_safe(Mat4& body_a, Mat4& body_b);
     void simulateTimestep(float timeStep) override;
     void onClick(int x, int y) override;
     void onMouse(int x, int y) override;
