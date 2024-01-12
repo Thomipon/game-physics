@@ -401,6 +401,8 @@ void RigidBodySystemSimulator::set_up_complex()
 
     springs_.emplace_back(0, 1, 3.f, 40.f);
     springs_.emplace_back(2, 3, 1.f, 40.f);
+    springs_.emplace_back(1, 2, 2.f, 30.f);
+    springs_.emplace_back(3, 0, 3.f, 50.f);
 
     planes_.emplace_back(Vec3{0., -.5, 0.}, Vec3{0., 1., 0.});
 }
