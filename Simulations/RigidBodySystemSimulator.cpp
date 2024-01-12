@@ -40,8 +40,11 @@ Mat4 box::get_rotated_inertia(const Mat4& initial_inv_inertia, const Quat& rotat
 
 void plane::collide_box(box& object, const Vec3& position) const
 {
-    object.apply_impulse(normal_ * dot(normal_, object.linear_velocity) * -1. * object.mass, position);
-    //object.linear_velocity = .9 * reflectVector(object.linear_velocity, normal_);
+    //object.apply_impulse(normal_ * abs(dot(normal_, object.linear_velocity)) * 1.1 * object.mass, position);
+    object.center_position += .001 * normal_;
+    object.linear_velocity = .999 * reflectVector(object.linear_velocity, normal_);
+    //object.angular_momentum += cross(normal_, position - object.center_position);
+    object.angular_momentum *= .9;
 }
 
 Mat4 plane::get_transform() const
@@ -68,7 +71,7 @@ void box::simulate_step(float timeStep)
 
     center_position += linear_velocity * timeStep;
     Vec3 attraction_force{center_position};
-    normalize(attraction_force);
+    //normalize(attraction_force);
     attraction_force += Vec3{0., 9.81, 0.};
     linear_velocity += timeStep * (forces / mass + spring_acceleration(spring_force,
                                                                        get_point_velocity(center_position)) -
@@ -197,16 +200,18 @@ void RigidBodySystemSimulator::collide_bodies(int a, int b, const Vec3& collisio
 
     const Vec3 inertia_a = cross(bodies_[a].inv_inertia_tensor.transformVector(cross(xa, normal)), xa);
     const Vec3 inertia_b = cross(bodies_[b].inv_inertia_tensor.transformVector(cross(xb, normal)), xb);
-    const double denominator = 1. / bodies_[a].mass + 1. / bodies_[b].mass + dot((inertia_a + inertia_b) * .5, normal);
+    const double denominator = 1. / bodies_[a].mass + 1. / bodies_[b].mass + dot((inertia_a + inertia_b), normal);
 
     // c = 1
-    const double impulse = -2. * dot(relative_velocity, normal) / denominator;
+    const double impulse = std::max(0., -1.5 * dot(relative_velocity, normal) / denominator);
 
     const Vec3 center_of_mass{
         (bodies_[a].center_position * bodies_[a].mass + bodies_[b].center_position * bodies_[b].mass) / (bodies_[a].mass
             + bodies_[b].mass)
     };
     const Vec3 force_point{collision_point - center_of_mass};
+    bodies_[a].center_position += .01 * normal;
+    bodies_[b].center_position -= .01 * normal;
     bodies_[a].apply_impulse(impulse * normal, xa);
     bodies_[b].apply_impulse(-impulse * normal, xb);
 }
