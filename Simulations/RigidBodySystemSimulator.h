@@ -63,6 +63,31 @@ private:
     static Mat4 get_rotated_inertia(const Mat4& initial_inv_inertia, const Quat& rotation);
 };
 
+struct plane
+{
+public:
+    plane(const Vec3& base, const Vec3& normal)
+        : base_(base),
+          normal_(normal)
+    {
+        normalize(normal_);
+
+        Vec3 rot = cross(Vec3{0., 1., 0.}, normal_);
+        normalize(rot);
+        transform_ = box{
+            base_, Vec3{1000., .1, 1000.}, Quat{rot, std::acos(dot(Vec3{0., 1., 0.}, normal_))}, Vec3{0.}, Vec3{0.}, 0.
+        }.get_transform();
+    }
+
+    void collide_box(box& object, const Vec3& position) const;
+    Mat4 get_transform() const;
+
+private:
+    Vec3 base_;
+    Vec3 normal_;
+    Mat4 transform_;
+};
+
 struct spring
 {
 public:
@@ -93,6 +118,7 @@ public:
     void drawFrame(ID3D11DeviceContext* pd3dImmediateContext) override;
     void notifyCaseChanged(int testCase) override;
     void externalForcesCalculations(float timeElapsed) override;
+    CollisionInfo check_collision_safe(Mat4& body_a, Mat4& body_b) const;
     void simulateTimestep(float timeStep) override;
     void onClick(int x, int y) override;
     void onMouse(int x, int y) override;
@@ -120,6 +146,7 @@ private:
 
     std::vector<box> bodies_;
     std::vector<spring> springs_;
+    std::vector<plane> planes_;
 
     void set_up_simple();
     void set_up_two_body();

@@ -1,5 +1,12 @@
 ﻿#include "RigidBodySystemSimulator.h"
 
+CollisionInfo RigidBodySystemSimulator::check_collision_safe(Mat4& body_a, Mat4& body_b) const
+{
+    if (std::isnan(XMMatrixDeterminant((body_a * body_b).toDirectXMatrix()).m128_f32[0]))
+        return CollisionInfo{false, Vec3{}, Vec3{}, -1.};
+    return checkCollisionSAT(body_a, body_b);
+}
+
 Mat4 box::get_transform() const
 {
     const Mat4 scale_mat{
@@ -29,6 +36,17 @@ Mat4 box::get_rotated_inertia(const Mat4& initial_inv_inertia, const Quat& rotat
     Mat4 inv_rotation_mat{rotation_mat};
     inv_rotation_mat.transpose();
     return inv_rotation_mat * initial_inv_inertia * rotation_mat;
+}
+
+void plane::collide_box(box& object, const Vec3& position) const
+{
+    object.apply_impulse(normal_ * dot(normal_, object.linear_velocity) * -1. * object.mass, position);
+    //object.linear_velocity = .9 * reflectVector(object.linear_velocity, normal_);
+}
+
+Mat4 plane::get_transform() const
+{
+    return transform_;
 }
 
 Mat4 box::compute_initial_inertia(const Vec3& size, const double mass)
@@ -111,6 +129,11 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateConte
                       bodies_.at(spring.point2).center_position, Vec3{0., 1., 1.});
         DUC->endLine();
     }
+    DUC->setUpLighting(Vec3{}, Vec3{.4, .6, .6}, 100., Vec3{.2, .2, .2});
+    for (const auto& plane : planes_)
+    {
+        DUC->drawRigidBody(plane.get_transform());
+    }
 }
 
 void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
@@ -147,10 +170,20 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
         {
             Mat4 body_a{bodies_[i].get_transform()};
             Mat4 body_b{bodies_[j].get_transform()};
-            CollisionInfo collision = checkCollisionSAT(body_a, body_b);
+            CollisionInfo collision = check_collision_safe(body_a, body_b);
             if (collision.isValid)
             {
                 collide_bodies(i, j, collision.collisionPointWorld, collision.normalWorld);
+            }
+        }
+        for (const auto& plane : planes_)
+        {
+            Mat4 body{bodies_[i].get_transform()};
+            Mat4 plane_mat{plane.get_transform()};
+            CollisionInfo collision{check_collision_safe(body, plane_mat)};
+            if (collision.isValid)
+            {
+                plane.collide_box(bodies_[i], collision.collisionPointWorld);
             }
         }
     }
@@ -169,7 +202,10 @@ void RigidBodySystemSimulator::collide_bodies(int a, int b, const Vec3& collisio
     // c = 1
     const double impulse = -2. * dot(relative_velocity, normal) / denominator;
 
-    const Vec3 center_of_mass{(bodies_[a].center_position * bodies_[a].mass + bodies_[b].center_position * bodies_[b].mass)/(bodies_[a].mass + bodies_[b].mass)};
+    const Vec3 center_of_mass{
+        (bodies_[a].center_position * bodies_[a].mass + bodies_[b].center_position * bodies_[b].mass) / (bodies_[a].mass
+            + bodies_[b].mass)
+    };
     const Vec3 force_point{collision_point - center_of_mass};
     bodies_[a].apply_impulse(impulse * normal, xa);
     bodies_[b].apply_impulse(-impulse * normal, xb);
@@ -360,4 +396,6 @@ void RigidBodySystemSimulator::set_up_complex()
 
     springs_.emplace_back(0, 1, 3.f, 40.f);
     springs_.emplace_back(2, 3, 1.f, 40.f);
+
+    planes_.emplace_back(Vec3{0., -.5, 0.}, Vec3{0., 1., 0.});
 }

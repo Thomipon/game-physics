@@ -225,7 +225,7 @@ namespace collisionTools{
 	inline XMVECTOR handleVertexToface(const XMMATRIX& obj2World, const XMVECTOR& toCenter)
 	{
 		std::vector<XMVECTOR> corners = getCorners(obj2World);
-		float min = 1000;
+		float min = 1e10;
 		XMVECTOR vertex;
 		for (int i = 0; i < corners.size(); i++)
 		{

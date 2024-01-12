@@ -3,9 +3,9 @@
 
 void mass_point::process_collision(const plane& plane, const float radius)
 {
-    if(abs(dot(position - plane.position, plane.normal)) < radius)
+    if(abs(dot(position - plane.position, plane.normal_)) < radius)
     {
-        velocity = .99 * reflectVector(velocity, plane.normal);
+        velocity = .99 * reflectVector(velocity, plane.normal_);
     }
 }
 

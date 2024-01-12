@@ -41,13 +41,13 @@ struct plane
 
     plane(const Vec3& position, const Vec3& normal)
         : position(position),
-          normal(normal)
+          normal_(normal)
     {
     }
 
 public:
     Vec3 position{0., -1., 0.};
-    Vec3 normal{0., 1., 0.};
+    Vec3 normal_{0., 1., 0.};
 };
 
 struct spring
