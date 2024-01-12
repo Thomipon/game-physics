@@ -151,6 +151,7 @@ private:
     void set_up_simple();
     void set_up_two_body();
     void set_up_complex();
+    void set_up_full();
 
     void print_solution();
     void collide_bodies(int a, int b, const Vec3& collision_point, const Vec3& normal);

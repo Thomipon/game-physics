@@ -103,7 +103,7 @@ RigidBodySystemSimulator::RigidBodySystemSimulator()
 
 const char* RigidBodySystemSimulator::getTestCasesStr()
 {
-    return "Default";
+    return "Default, Full";
 }
 
 void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC)
@@ -143,12 +143,15 @@ void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 {
     m_iTestCase = testCase;
 
-    if (testCase == 0)
+    switch(testCase)
     {
+    case 0:
         set_up_complex();
-    }
-    else
-    {
+        break;
+    case 1:
+        set_up_full();
+        break;
+    default:
         throw std::runtime_error{"Illegal testcase"};
     }
 }
@@ -412,8 +415,14 @@ void RigidBodySystemSimulator::set_up_complex()
     springs_.emplace_back(6, 7, 1.f, 50.f);
     springs_.emplace_back(6, 8, 1.f, 50.f);
     springs_.emplace_back(6, 9, 1.f, 50.f);
+    
+    planes_.emplace_back(Vec3{0., -1., 0.}, Vec3{0., 1., 0.});
+}
 
-    /*
+void RigidBodySystemSimulator::set_up_full()
+{
+    set_up_complex();
+    
     bodies_.emplace_back(Vec3{-3., 0., 3.}, Vec3{0.5, 0.7, 0.5}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0., 0., 0.}, Vec3{0.},
                          8.);
     bodies_.emplace_back(Vec3{3., 0., -3.}, Vec3{0.7, 0.5, 0.5}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0., 0., 0.}, Vec3{0.},
@@ -421,8 +430,43 @@ void RigidBodySystemSimulator::set_up_complex()
     bodies_.emplace_back(Vec3{0., 2., 3.}, Vec3{0.5, 0.3, 0.5}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0., 0., 0.}, Vec3{0.},
                          6.);
     springs_.emplace_back(10, 12, 3.f, 25.f);
-    springs_.emplace_back(11, 12, 3.f, 25.f);*/
+    springs_.emplace_back(11, 12, 3.f, 25.f);
 
-    
-    planes_.emplace_back(Vec3{0., -1., 0.}, Vec3{0., 1., 0.});
+    bodies_.emplace_back(Vec3{3., 1., 3.}, Vec3{0.4, 0.4, 0.4}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0., 1., 0.},Vec3{1., 0., 0.}, 2.);
+    bodies_.emplace_back(Vec3{3., 0.5, 3.}, Vec3{0.4, 0.6, 0.4}, Quat{Vec3{1., 0., 0.}, 0.5 * pi_half}, Vec3{0., 1., 0.},Vec3{0.}, 3.);
+    bodies_.emplace_back(Vec3{-2., 0., 2.}, Vec3{0.3, 0.3, 0.3}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0.5, 0., 0.}, Vec3{0.},2.);
+    bodies_.emplace_back(Vec3{1., 0., 3.}, Vec3{0.2, 0.4, 0.2}, Quat{Vec3{1., 0., 1.}, 0.5 * pi_half},Vec3{0.}, Vec3{1., 0., 0.}, 3.);
+
+    springs_.emplace_back(13, 14, 0.2f, 40.f);
+    springs_.emplace_back(14, 15, 1.f, 20.f);
+    springs_.emplace_back(15, 16, 2.f, 20.f);
+    springs_.emplace_back(16, 13, 4.f, 40.f);
+
+    bodies_.emplace_back(Vec3{4., 0., -1.}, Vec3 {0.5, 0.3, 0.3}, Quat{Vec3{1., 0., 1.},pi_half * 0.25}, Vec3{0.}, Vec3{0.}, 5.);
+    bodies_.emplace_back(Vec3{0., 0., -1.}, Vec3 {0.5, 0.3, 0.3}, Quat{Vec3{1., 0., 1.},pi_half * 0.25}, Vec3{0.}, Vec3{0.}, 5.);
+    springs_.emplace_back(17, 18, 0.5f, 30.f);
+
+    bodies_.emplace_back(Vec3{-4., 0., 1.}, Vec3{0.3, 0.3, 0.3}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0., 2., 0.}, Vec3{0.},
+                         2.);
+    bodies_.emplace_back(Vec3{-4., 0., 1.5}, Vec3{0.2, 0.4, 0.2}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0., 0., 0.}, Vec3{0.},
+                         2.);
+    bodies_.emplace_back(Vec3{-4., 0., -1.5}, Vec3{0.2, 0.4, 0.2}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0., 0., 0.}, Vec3{0.},
+                         2.);
+    bodies_.emplace_back(Vec3{-4.5, 0., 1}, Vec3{0.2, 0.4, 0.2}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0., 0., 0.}, Vec3{0.},
+                         2.);
+    bodies_.emplace_back(Vec3{-4.5, 0., 1.5}, Vec3{0.2, 0.4, 0.2}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0., 0., 0.}, Vec3{0.},
+                         2.);
+    springs_.emplace_back(19, 20, 1.f, 50.f);
+    springs_.emplace_back(19, 21, 1.f, 50.f);
+    springs_.emplace_back(19, 22, 1.f, 50.f);
+    springs_.emplace_back(19, 23, 1.f, 50.f);
+
+    bodies_.emplace_back(Vec3{3., 2., -4.}, Vec3 {0.5, 0.3, 0.3}, Quat{Vec3{1., 0., 1.},pi_half * 0.25}, Vec3{0.}, Vec3{0.}, 5.);
+    bodies_.emplace_back(Vec3{2., 3., -4.}, Vec3 {0.5, 0.3, 0.3}, Quat{Vec3{1., 0., 1.},pi_half * 0.25}, Vec3{0.}, Vec3{0.}, 5.);
+    bodies_.emplace_back(Vec3{2.5, 2.5, -3.5}, Vec3 {0.5, 0.3, 0.3}, Quat{Vec3{1., 0., 1.},pi_half * 0.25}, Vec3{0.}, Vec3{0.}, 5.);
+    springs_.emplace_back(24, 25, 2.f, 30.f);
+    springs_.emplace_back(26, 25, 1.f, 30.f);
+    springs_.emplace_back(24, 26, 2.f, 30.f);
 }
+
+
