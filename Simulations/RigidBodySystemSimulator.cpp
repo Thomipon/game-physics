@@ -20,7 +20,7 @@ Mat4 box::get_transform() const
 
 Vec3 box::spring_acceleration(const Vec3& spring_force, const Vec3& linear_velocity) const
 {
-    return  1./ mass * (spring_force - 0./*std::min(1., norm(spring_force)) */* linear_velocity);
+    return 1. / mass * (spring_force - 0./*std::min(1., norm(spring_force)) */ * linear_velocity);
 }
 
 Mat4 box::get_rotated_inertia(const Mat4& initial_inv_inertia, const Quat& rotation)
@@ -46,9 +46,10 @@ Mat4 box::compute_initial_inertia(const Vec3& size, const double mass)
 void box::simulate_step(float timeStep)
 {
     center_position += linear_velocity * timeStep;
-    linear_velocity += timeStep * (forces / mass + spring_acceleration(spring_force, get_point_velocity(center_position)));
+    linear_velocity += timeStep * (forces / mass + spring_acceleration(spring_force,
+                                                                       get_point_velocity(center_position)));
 
-    rotation += timeStep * .5 * rotation * Quat{ 0., angular_velocity.x, angular_velocity.y, angular_velocity.z };
+    rotation += timeStep * .5 * rotation * Quat{0., angular_velocity.x, angular_velocity.y, angular_velocity.z};
     rotation = rotation.unit();
 
     angular_momentum += timeStep * (torque + spring_torque);
@@ -74,7 +75,7 @@ RigidBodySystemSimulator::RigidBodySystemSimulator()
 
 const char* RigidBodySystemSimulator::getTestCasesStr()
 {
-    return "Single Step,Single Body,Two Bodies,Complex";
+    return "Default";
 }
 
 void RigidBodySystemSimulator::initUI(DrawingUtilitiesClass* DUC)
@@ -99,7 +100,8 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateConte
     for (const auto& spring : springs_)
     {
         DUC->beginLine();
-        DUC->drawLine(bodies_.at(spring.point1).center_position, Vec3{0., 0., 1.}, bodies_.at(spring.point2).center_position, Vec3{0., 1., 1.});
+        DUC->drawLine(bodies_.at(spring.point1).center_position, Vec3{0., 0., 1.},
+                      bodies_.at(spring.point2).center_position, Vec3{0., 1., 1.});
         DUC->endLine();
     }
 }
@@ -107,21 +109,13 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateConte
 void RigidBodySystemSimulator::notifyCaseChanged(int testCase)
 {
     m_iTestCase = testCase;
-    only_first_ = testCase == 0;
-    is_first_ = true;
-    switch (testCase)
+
+    if (testCase == 0)
     {
-    case 0:
-    case 1:
-        set_up_simple();
-        break;
-    case 2:
-        set_up_two_body();
-        break;
-    case 3:
         set_up_complex();
-        break;
-    default:
+    }
+    else
+    {
         throw std::runtime_error{"Illegal testcase"};
     }
 }
@@ -132,9 +126,6 @@ void RigidBodySystemSimulator::externalForcesCalculations(float timeElapsed)
 
 void RigidBodySystemSimulator::simulateTimestep(float timeStep)
 {
-    if (only_first_ && !is_first_)
-        return;
-
     compute_spring_forces();
 
     for (auto& body : bodies_)
@@ -143,24 +134,19 @@ void RigidBodySystemSimulator::simulateTimestep(float timeStep)
     }
 
     // Collision Detection
-    for(int i = 0; i < getNumberOfRigidBodies(); i++)
+    for (int i = 0; i < getNumberOfRigidBodies(); i++)
     {
-	    for(int j = i+1; j < getNumberOfRigidBodies(); j++)
-	    {
-	        Mat4 body_a{bodies_[i].get_transform()};
-	        Mat4 body_b{bodies_[j].get_transform()};
+        for (int j = i + 1; j < getNumberOfRigidBodies(); j++)
+        {
+            Mat4 body_a{bodies_[i].get_transform()};
+            Mat4 body_b{bodies_[j].get_transform()};
             CollisionInfo collision = checkCollisionSAT(body_a, body_b);
-            if(collision.isValid)
+            if (collision.isValid)
             {
                 collide_bodies(i, j, collision.collisionPointWorld, collision.normalWorld);
             }
-	    }
+        }
     }
-
-    if (only_first_ && is_first_) {
-        print_solution();
-    }
-	is_first_ = false;
 }
 
 void RigidBodySystemSimulator::collide_bodies(int a, int b, const Vec3& collision_point, const Vec3& normal)
@@ -210,8 +196,10 @@ void RigidBodySystemSimulator::compute_spring_forces()
 
 void RigidBodySystemSimulator::print_solution()
 {
-    std::cout << "Linear Velocity: " << getLinearVelocityOfRigidBody(0) << " Angular velocity: " << getAngularVelocityOfRigidBody(0) << "\n";
-    std::cout << "Velocity of Point (-0.3, -0.5, -0.25): " << bodies_[0].get_point_velocity(Vec3{ -0.3, -0.5, -0.25 } - bodies_[0].center_position) << std::endl;
+    std::cout << "Linear Velocity: " << getLinearVelocityOfRigidBody(0) << " Angular velocity: " <<
+        getAngularVelocityOfRigidBody(0) << "\n";
+    std::cout << "Velocity of Point (-0.3, -0.5, -0.25): " << bodies_[0].get_point_velocity(
+        Vec3{-0.3, -0.5, -0.25} - bodies_[0].center_position) << std::endl;
 }
 
 void RigidBodySystemSimulator::onClick(int x, int y)
@@ -226,18 +214,20 @@ void RigidBodySystemSimulator::interact()
 {
     Vec3 clickPosition{2. * m_trackmouse.x / DUC->screenWidth - 1., -2. * m_trackmouse.y / DUC->screenHeight + 1., 0.};
     std::cout << "Clicked at " << clickPosition << std::endl;
-    
+
     Mat4 pMat{DUC->g_camera.GetProjMatrix()};
     Mat4 vMat{DUC->g_camera.GetViewMatrix()};
     Mat4 wMat{DUC->g_camera.GetWorldMatrix()};
-    Vec3 worldClickPosition{wMat.inverse().transformVector(vMat.inverse().transformVector(pMat.inverse().transformVector(clickPosition)))};
+    Vec3 worldClickPosition{
+        wMat.inverse().transformVector(vMat.inverse().transformVector(pMat.inverse().transformVector(clickPosition)))
+    };
     std::cout << "Clicked at " << worldClickPosition << std::endl;
-    
+
     auto position{DUC->g_camera.GetEyePt()};
     Vec3 cameraPosition{position};
     Vec3 cameraDirection{worldClickPosition - cameraPosition};
     normalize(cameraDirection);
-    
+
     click_on_box(worldClickPosition, cameraDirection);
 }
 
@@ -251,17 +241,17 @@ void RigidBodySystemSimulator::click_on_box(const Vec3& clickPosition, const Vec
     Vec3 rot = cross(Vec3{0., 0., 1.}, direction);
     normalize(rot);
     Quat rayDirection{rot, std::acos(dot(Vec3{0., 0., 1.}, direction))};
-    
+
     box ray{clickPosition, Vec3{0.01, 0.01, 100.0}, rayDirection.unit(), Vec3{0.}, Vec3{0.}, 1};
     //bodies_.emplace_back(ray);
-    
-    for(int i = 0; i < getNumberOfRigidBodies(); i++)
+
+    for (int i = 0; i < getNumberOfRigidBodies(); i++)
     {
         CollisionInfo info = checkCollisionSAT(ray.get_transform(), bodies_[i].get_transform());
         if (info.isValid)
         {
             float distance = norm((info.collisionPointWorld - clickPosition));
-            if(distance < minDistance)
+            if (distance < minDistance)
             {
                 nearest = i;
                 minDistance = distance;
@@ -270,9 +260,9 @@ void RigidBodySystemSimulator::click_on_box(const Vec3& clickPosition, const Vec
         }
     }
 
-    if(nearest > -1)
+    if (nearest > -1)
     {
-        std::cout << "Collision with " << nearest << " at "<< collisionPoint << std::endl;
+        std::cout << "Collision with " << nearest << " at " << collisionPoint << std::endl;
         // do something with the box
     }
 }
@@ -338,8 +328,10 @@ void RigidBodySystemSimulator::set_up_two_body()
 {
     bodies_.clear();
 
-    bodies_.emplace_back(Vec3{ -1., 0., 0. }, Vec3{ 0.5, 0.5, 0.5 }, Quat{ Vec3{0., 0., 1.}, 0. }, Vec3{ 0.5, 0., 0. }, Vec3{ 0. }, 5.);
-    bodies_.emplace_back(Vec3{ 0.5, 0., 0. }, Vec3{ 0.3, 0.3, 0.3 }, Quat{ Vec3{1., 1., 1.}, 0.5 * pi_half }, Vec3{ -0.25, 0., 0. }, Vec3{ 0. }, 1.);
+    bodies_.emplace_back(Vec3{-1., 0., 0.}, Vec3{0.5, 0.5, 0.5}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0.5, 0., 0.},
+                         Vec3{0.}, 5.);
+    bodies_.emplace_back(Vec3{0.5, 0., 0.}, Vec3{0.3, 0.3, 0.3}, Quat{Vec3{1., 1., 1.}, 0.5 * pi_half},
+                         Vec3{-0.25, 0., 0.}, Vec3{0.}, 1.);
 }
 
 void RigidBodySystemSimulator::set_up_complex()
@@ -347,12 +339,15 @@ void RigidBodySystemSimulator::set_up_complex()
     bodies_.clear();
     springs_.clear();
 
-    bodies_.emplace_back(Vec3{ -1., 0., -1. }, Vec3{ 0.5, 0.5, 0.5 }, Quat{ Vec3{0., 0., 1.}, 0. }, Vec3{ 1., 0., .5 }, Vec3{ 0. }, 3.);
-    bodies_.emplace_back(Vec3{ 0., 1., 0. }, Vec3{ 0.3, 0.6, 0.3 }, Quat{ Vec3{1., 0., 0.}, 0.5 * pi_half }, Vec3{ 1., 0., .5 }, Vec3{ 0. }, 3.);
-    bodies_.emplace_back(Vec3{ 0., 0., 0. }, Vec3{ 0.7, 0.5, 0.5 }, Quat{ Vec3{0., 0., 1.}, 0. }, Vec3{ 0.5, 0., 0. }, Vec3{ 0. }, 3.);
-    bodies_.emplace_back(Vec3{ 1., 0., 1. }, Vec3{ 0.2, 0.5, 0.2 }, Quat{ Vec3{1., 0., 1.}, 0.5 * pi_half }, Vec3{ -0.5, 0., -0.5 }, Vec3{ 0. }, 3.);
+    bodies_.emplace_back(Vec3{-1., 0., -1.}, Vec3{0.5, 0.5, 0.5}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{1., 0., .5},
+                         Vec3{0.}, 3.);
+    bodies_.emplace_back(Vec3{0., 1., 0.}, Vec3{0.3, 0.6, 0.3}, Quat{Vec3{1., 0., 0.}, 0.5 * pi_half}, Vec3{1., 0., .5},
+                         Vec3{0.}, 3.);
+    bodies_.emplace_back(Vec3{0., 0., 0.}, Vec3{0.7, 0.5, 0.5}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0.5, 0., 0.}, Vec3{0.},
+                         3.);
+    bodies_.emplace_back(Vec3{1., 0., 1.}, Vec3{0.2, 0.5, 0.2}, Quat{Vec3{1., 0., 1.}, 0.5 * pi_half},
+                         Vec3{-0.5, 0., -0.5}, Vec3{0.}, 3.);
 
     springs_.emplace_back(0, 1, 3.f, 40.f);
     springs_.emplace_back(2, 3, 1.f, 40.f);
-
 }
