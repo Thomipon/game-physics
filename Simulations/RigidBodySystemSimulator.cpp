@@ -135,7 +135,7 @@ void RigidBodySystemSimulator::drawFrame(ID3D11DeviceContext* pd3dImmediateConte
     DUC->setUpLighting(Vec3{}, Vec3{.4, .6, .6}, 100., Vec3{.2, .2, .2});
     for (const auto& plane : planes_)
     {
-        DUC->drawRigidBody(plane.get_transform());
+        //DUC->drawRigidBody(plane.get_transform());
     }
 }
 
@@ -262,8 +262,6 @@ void RigidBodySystemSimulator::interact()
     const Vec3 click_position{
         2. * m_trackmouse.x / DUC->screenWidth - 1., -2. * m_trackmouse.y / DUC->screenHeight + 1., 0.
     };
-    std::cout << "Clicked at " << click_position << std::endl;
-
     Mat4 p_mat{DUC->g_camera.GetProjMatrix()};
     Mat4 v_mat{DUC->g_camera.GetViewMatrix()};
     Mat4 w_mat{DUC->g_camera.GetWorldMatrix()};
@@ -271,7 +269,6 @@ void RigidBodySystemSimulator::interact()
         w_mat.inverse().transformVector(
             v_mat.inverse().transformVector(p_mat.inverse().transformVector(click_position)))
     };
-    std::cout << "Clicked at " << world_click_position << std::endl;
 
     auto position{DUC->g_camera.GetEyePt()};
     const Vec3 camera_position{position};
@@ -290,13 +287,11 @@ void RigidBodySystemSimulator::click_on_box(const Vec3& clickPosition, const Vec
     Vec3 rot = cross(Vec3{0., 0., 1.}, direction);
     normalize(rot);
     const Quat ray_direction{rot, std::acos(dot(Vec3{0., 0., 1.}, direction))};
-
     const box ray{clickPosition, Vec3{0.01, 0.01, 100.0}, ray_direction.unit(), Vec3{0.}, Vec3{0.}, 1};
-    //bodies_.emplace_back(ray);
 
     for (int i = 0; i < getNumberOfRigidBodies(); i++)
     {
-        CollisionInfo info = checkCollisionSAT(ray.get_transform(), bodies_[i].get_transform());
+        CollisionInfo info = check_collision_safe(ray.get_transform(), bodies_[i].get_transform());
         if (info.isValid)
         {
             float distance = norm((info.collisionPointWorld - clickPosition));
@@ -402,5 +397,32 @@ void RigidBodySystemSimulator::set_up_complex()
     springs_.emplace_back(1, 2, 2.f, 30.f);
     springs_.emplace_back(3, 0, 3.f, 50.f);
 
-    planes_.emplace_back(Vec3{0., -.5, 0.}, Vec3{0., 1., 0.});
+    bodies_.emplace_back(Vec3{1., 3., 0.}, Vec3 {0.5, 0.3, 0.3}, Quat{Vec3{1., 0., 1.},pi_half * 0.25}, Vec3{0.}, Vec3{0.}, 5.);
+    bodies_.emplace_back(Vec3{-1., 3., 0.}, Vec3 {0.5, 0.3, 0.3}, Quat{Vec3{1., 0., 1.},pi_half * 0.25}, Vec3{0.}, Vec3{0.}, 5.);
+    springs_.emplace_back(4, 5, 3.f, 30.f);
+
+    bodies_.emplace_back(Vec3{-4., 0., 0.}, Vec3{0.3, 0.3, 0.3}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{2., 0., 0.}, Vec3{0.},
+                         5.);
+    bodies_.emplace_back(Vec3{-4., 0., 0.5}, Vec3{0.2, 0.4, 0.2}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0., 0., 0.}, Vec3{0.},
+                         2.);
+    bodies_.emplace_back(Vec3{-4., 0., -0.5}, Vec3{0.2, 0.4, 0.2}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0., 0., 0.}, Vec3{0.},
+                         2.);
+    bodies_.emplace_back(Vec3{-4.5, 0., 0}, Vec3{0.2, 0.4, 0.2}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0., 0., 0.}, Vec3{0.},
+                         2.);
+    springs_.emplace_back(6, 7, 1.f, 50.f);
+    springs_.emplace_back(6, 8, 1.f, 50.f);
+    springs_.emplace_back(6, 9, 1.f, 50.f);
+
+    /*
+    bodies_.emplace_back(Vec3{-3., 0., 3.}, Vec3{0.5, 0.7, 0.5}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0., 0., 0.}, Vec3{0.},
+                         8.);
+    bodies_.emplace_back(Vec3{3., 0., -3.}, Vec3{0.7, 0.5, 0.5}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0., 0., 0.}, Vec3{0.},
+                         8.);
+    bodies_.emplace_back(Vec3{0., 2., 3.}, Vec3{0.5, 0.3, 0.5}, Quat{Vec3{0., 0., 1.}, 0.}, Vec3{0., 0., 0.}, Vec3{0.},
+                         6.);
+    springs_.emplace_back(10, 12, 3.f, 25.f);
+    springs_.emplace_back(11, 12, 3.f, 25.f);*/
+
+    
+    planes_.emplace_back(Vec3{0., -1., 0.}, Vec3{0., 1., 0.});
 }
